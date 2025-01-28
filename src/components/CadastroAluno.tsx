@@ -19,6 +19,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const formSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
@@ -34,6 +35,7 @@ interface CadastroAlunoProps {
 }
 
 export function CadastroAluno({ onClose }: CadastroAlunoProps) {
+  const { toast } = useToast();
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -45,8 +47,30 @@ export function CadastroAluno({ onClose }: CadastroAlunoProps) {
   });
 
   const onSubmit = (data: FormValues) => {
-    console.log(data);
-    // TODO: Implementar lógica de cadastro
+    console.log("Dados do aluno:", data);
+    
+    // Recupera os alunos existentes do localStorage
+    const alunosAtuais = JSON.parse(localStorage.getItem("alunos") || "[]");
+    
+    // Adiciona o novo aluno com um ID único
+    const novoAluno = {
+      id: Date.now(), // Usando timestamp como ID
+      ...data,
+    };
+    
+    // Atualiza a lista de alunos
+    const novosAlunos = [...alunosAtuais, novoAluno];
+    
+    // Salva no localStorage
+    localStorage.setItem("alunos", JSON.stringify(novosAlunos));
+    
+    // Mostra mensagem de sucesso
+    toast({
+      title: "Aluno cadastrado com sucesso!",
+      description: `${data.nome} foi adicionado à lista de alunos.`,
+    });
+
+    // Fecha o formulário
     onClose();
   };
 
