@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Toaster } from "@/components/ui/toaster";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, MinusCircle, Pencil, Trash2 } from "lucide-react";
@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Payment {
   id: string;
@@ -326,260 +328,302 @@ export default function Pagamentos() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Pagamentos</h1>
-        <div className="space-x-2">
-          <Button onClick={() => setShowAdditionalIncome(true)}>
+    <div className="space-y-6 p-4 md:p-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <h1 className="text-2xl md:text-3xl font-bold">Pagamentos</h1>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-2">
+          <Button 
+            onClick={() => setShowAdditionalIncome(true)}
+            className="w-full sm:w-auto"
+          >
             <PlusCircle className="w-4 h-4 mr-2" />
-            Nova Receita Adicional
+            Nova Receita
           </Button>
-          <Button onClick={() => setShowCourtExpense(true)}>
+          <Button 
+            onClick={() => setShowCourtExpense(true)}
+            className="w-full sm:w-auto"
+          >
             <PlusCircle className="w-4 h-4 mr-2" />
-            Nova Despesa da Quadra
+            Nova Despesa Quadra
           </Button>
-          <Button onClick={() => setShowExpense(true)} variant="destructive">
+          <Button 
+            onClick={() => setShowExpense(true)} 
+            variant="destructive"
+            className="w-full sm:w-auto"
+          >
             <MinusCircle className="w-4 h-4 mr-2" />
             Nova Despesa Extra
           </Button>
-          <Button onClick={() => setShowCadastro(true)}>
+          <Button 
+            onClick={() => setShowCadastro(true)}
+            className="w-full sm:w-auto"
+          >
             <PlusCircle className="w-4 h-4 mr-2" />
             Novo Pagamento
           </Button>
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Receitas Adicionais</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Data</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {additionalIncomes.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center">
-                    Nenhuma receita adicional registrada
-                  </TableCell>
-                </TableRow>
-              ) : (
-                additionalIncomes.map((income) => (
-                  <TableRow key={income.id}>
-                    <TableCell>{formatDate(income.date)}</TableCell>
-                    <TableCell>{formatCurrency(income.amount)}</TableCell>
-                    <TableCell>{income.description}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditIncome(income)}
-                        >
-                          <Pencil className="w-4 h-4 mr-2" />
-                          Editar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteIncome(income.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Remover
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Receitas Adicionais</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="w-full">
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[100px]">Data</TableHead>
+                      <TableHead className="min-w-[100px]">Valor</TableHead>
+                      <TableHead className="min-w-[200px]">Descrição</TableHead>
+                      <TableHead className="min-w-[150px]">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {additionalIncomes.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center">
+                          Nenhuma receita adicional registrada
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      additionalIncomes.map((income) => (
+                        <TableRow key={income.id}>
+                          <TableCell>{formatDate(income.date)}</TableCell>
+                          <TableCell>{formatCurrency(income.amount)}</TableCell>
+                          <TableCell className="max-w-[200px] truncate">
+                            {income.description}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col gap-2 sm:flex-row sm:space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditIncome(income)}
+                                className="w-full sm:w-auto"
+                              >
+                                <Pencil className="w-4 h-4 mr-2" />
+                                Editar
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteIncome(income.id)}
+                                className="w-full sm:w-auto text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Remover
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Despesas da Quadra</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Mês/Ano</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Data do Pagamento</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Saldo do Mês</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {courtExpenses.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center">
-                    Nenhuma despesa registrada
-                  </TableCell>
-                </TableRow>
-              ) : (
-                courtExpenses.map((expense) => (
-                  <TableRow key={expense.id}>
-                    <TableCell>{formatDate(expense.due_date)}</TableCell>
-                    <TableCell>{formatCurrency(expense.amount)}</TableCell>
-                    <TableCell>
-                      {expense.payment_date ? formatDate(expense.payment_date) : "-"}
-                    </TableCell>
-                    <TableCell>{expense.description || "-"}</TableCell>
-                    <TableCell>
-                      {formatCurrency(calculateMonthlyBalance(expense.due_date.substring(0, 7)))}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditCourtExpense(expense)}
-                        >
-                          <Pencil className="w-4 h-4 mr-2" />
-                          Editar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteCourtExpense(expense.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Remover
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Despesas da Quadra</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="w-full">
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[100px]">Mês/Ano</TableHead>
+                      <TableHead className="min-w-[100px]">Valor</TableHead>
+                      <TableHead className="min-w-[120px]">Data Pagamento</TableHead>
+                      <TableHead className="min-w-[200px]">Descrição</TableHead>
+                      <TableHead className="min-w-[100px]">Saldo Mês</TableHead>
+                      <TableHead className="min-w-[150px]">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {courtExpenses.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center">
+                          Nenhuma despesa registrada
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      courtExpenses.map((expense) => (
+                        <TableRow key={expense.id}>
+                          <TableCell>{formatDate(expense.due_date)}</TableCell>
+                          <TableCell>{formatCurrency(expense.amount)}</TableCell>
+                          <TableCell>
+                            {expense.payment_date ? formatDate(expense.payment_date) : "-"}
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate">
+                            {expense.description || "-"}
+                          </TableCell>
+                          <TableCell>
+                            {formatCurrency(calculateMonthlyBalance(expense.due_date.substring(0, 7)))}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col gap-2 sm:flex-row sm:space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditCourtExpense(expense)}
+                                className="w-full sm:w-auto"
+                              >
+                                <Pencil className="w-4 h-4 mr-2" />
+                                Editar
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteCourtExpense(expense.id)}
+                                className="w-full sm:w-auto text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Remover
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Despesas Extras</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Data</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Data do Pagamento</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {extraExpenses.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center">
-                    Nenhuma despesa extra registrada
-                  </TableCell>
-                </TableRow>
-              ) : (
-                extraExpenses.map((expense) => (
-                  <TableRow key={expense.id}>
-                    <TableCell>{formatDate(expense.date)}</TableCell>
-                    <TableCell>{formatCurrency(expense.amount)}</TableCell>
-                    <TableCell>
-                      {expense.payment_date ? formatDate(expense.payment_date) : "-"}
-                    </TableCell>
-                    <TableCell>{expense.description}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditExpense(expense)}
-                        >
-                          <Pencil className="w-4 h-4 mr-2" />
-                          Editar
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteExpense(expense.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Remover
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Despesas Extras</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="w-full">
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[100px]">Data</TableHead>
+                      <TableHead className="min-w-[100px]">Valor</TableHead>
+                      <TableHead className="min-w-[120px]">Data Pagamento</TableHead>
+                      <TableHead className="min-w-[200px]">Descrição</TableHead>
+                      <TableHead className="min-w-[150px]">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {extraExpenses.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center">
+                          Nenhuma despesa extra registrada
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      extraExpenses.map((expense) => (
+                        <TableRow key={expense.id}>
+                          <TableCell>{formatDate(expense.date)}</TableCell>
+                          <TableCell>{formatCurrency(expense.amount)}</TableCell>
+                          <TableCell>
+                            {expense.payment_date ? formatDate(expense.payment_date) : "-"}
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate">
+                            {expense.description}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col gap-2 sm:flex-row sm:space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditExpense(expense)}
+                                className="w-full sm:w-auto"
+                              >
+                                <Pencil className="w-4 h-4 mr-2" />
+                                Editar
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteExpense(expense.id)}
+                                className="w-full sm:w-auto text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Remover
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Pagamentos</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Aluno</TableHead>
-                <TableHead>Mês/Ano</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Data do Pagamento</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {payments.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center">
-                    Nenhum pagamento registrado
-                  </TableCell>
-                </TableRow>
-              ) : (
-                payments.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell>{payment.student.name}</TableCell>
-                    <TableCell>{formatDate(payment.due_date)}</TableCell>
-                    <TableCell>{formatCurrency(payment.amount)}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full ${
-                          payment.status === "paid"
-                            ? "bg-green-100 text-green-800"
-                            : payment.status === "pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {formatStatus(payment.status)}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {payment.payment_date ? formatDate(payment.payment_date) : "-"}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Lista de Pagamentos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="w-full">
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[200px]">Aluno</TableHead>
+                      <TableHead className="min-w-[100px]">Mês/Ano</TableHead>
+                      <TableHead className="min-w-[100px]">Valor</TableHead>
+                      <TableHead className="min-w-[100px]">Status</TableHead>
+                      <TableHead className="min-w-[120px]">Data Pagamento</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {payments.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center">
+                          Nenhum pagamento registrado
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      payments.map((payment) => (
+                        <TableRow key={payment.id}>
+                          <TableCell className="font-medium">
+                            {payment.student.name}
+                          </TableCell>
+                          <TableCell>{formatDate(payment.due_date)}</TableCell>
+                          <TableCell>{formatCurrency(payment.amount)}</TableCell>
+                          <TableCell>
+                            <span
+                              className={`inline-flex items-center px-2 py-1 text-xs rounded-full ${
+                                payment.status === "paid"
+                                  ? "bg-green-100 text-green-800"
+                                  : payment.status === "pending"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                            >
+                              {formatStatus(payment.status)}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            {payment.payment_date ? formatDate(payment.payment_date) : "-"}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
 
       {showCadastro && <CadastroPagamento onClose={handlePaymentAdded} />}
       {showCourtExpense && (
