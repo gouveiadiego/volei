@@ -41,6 +41,33 @@ export type Database = {
           },
         ]
       }
+      court_expenses: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string | null
+          due_date: string
+          id: string
+          payment_date: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description?: string | null
+          due_date: string
+          id?: string
+          payment_date?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string | null
+          due_date?: string
+          id?: string
+          payment_date?: string | null
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number

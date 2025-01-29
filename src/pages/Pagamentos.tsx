@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { CadastroPagamento } from "@/components/CadastroPagamento";
+import { CadastroCourtExpense } from "@/components/CadastroCourtExpense";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -19,9 +20,19 @@ interface Payment {
   };
 }
 
+interface CourtExpense {
+  id: string;
+  amount: number;
+  due_date: string;
+  payment_date: string | null;
+  description: string | null;
+}
+
 export default function Pagamentos() {
   const [showCadastro, setShowCadastro] = useState(false);
+  const [showCourtExpense, setShowCourtExpense] = useState(false);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [courtExpenses, setCourtExpenses] = useState<CourtExpense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchPayments = async () => {
@@ -48,6 +59,26 @@ export default function Pagamentos() {
       setPayments(data);
     } catch (error) {
       console.error("Error:", error);
+    }
+  };
+
+  const fetchCourtExpenses = async () => {
+    try {
+      console.log("Fetching court expenses...");
+      const { data, error } = await supabase
+        .from("court_expenses")
+        .select("*")
+        .order("due_date", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching court expenses:", error);
+        return;
+      }
+
+      console.log("Court expenses fetched:", data);
+      setCourtExpenses(data);
+    } catch (error) {
+      console.error("Error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -55,11 +86,17 @@ export default function Pagamentos() {
 
   useEffect(() => {
     fetchPayments();
+    fetchCourtExpenses();
   }, []);
 
   const handlePaymentAdded = () => {
     setShowCadastro(false);
     fetchPayments();
+  };
+
+  const handleCourtExpenseAdded = () => {
+    setShowCourtExpense(false);
+    fetchCourtExpenses();
   };
 
   const formatStatus = (status: string) => {
@@ -86,15 +123,81 @@ export default function Pagamentos() {
     }).format(value);
   };
 
+  const calculateMonthlyBalance = (month: string) => {
+    const monthPayments = payments
+      .filter(payment => payment.due_date.startsWith(month) && payment.status === "paid")
+      .reduce((sum, payment) => sum + payment.amount, 0);
+
+    const monthExpenses = courtExpenses
+      .filter(expense => expense.due_date.startsWith(month))
+      .reduce((sum, expense) => sum + expense.amount, 0);
+
+    return monthPayments - monthExpenses;
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Pagamentos</h1>
-        <Button onClick={() => setShowCadastro(true)}>
-          <PlusCircle className="w-4 h-4 mr-2" />
-          Novo Pagamento
-        </Button>
+        <div className="space-x-2">
+          <Button onClick={() => setShowCourtExpense(true)}>
+            <PlusCircle className="w-4 h-4 mr-2" />
+            Nova Despesa da Quadra
+          </Button>
+          <Button onClick={() => setShowCadastro(true)}>
+            <PlusCircle className="w-4 h-4 mr-2" />
+            Novo Pagamento
+          </Button>
+        </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Despesas da Quadra</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Mês/Ano</TableHead>
+                <TableHead>Valor</TableHead>
+                <TableHead>Data do Pagamento</TableHead>
+                <TableHead>Descrição</TableHead>
+                <TableHead>Saldo do Mês</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center">
+                    Carregando despesas...
+                  </TableCell>
+                </TableRow>
+              ) : courtExpenses.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center">
+                    Nenhuma despesa registrada
+                  </TableCell>
+                </TableRow>
+              ) : (
+                courtExpenses.map((expense) => (
+                  <TableRow key={expense.id}>
+                    <TableCell>{formatDate(expense.due_date)}</TableCell>
+                    <TableCell>{formatCurrency(expense.amount)}</TableCell>
+                    <TableCell>
+                      {expense.payment_date ? formatDate(expense.payment_date) : "-"}
+                    </TableCell>
+                    <TableCell>{expense.description || "-"}</TableCell>
+                    <TableCell>
+                      {formatCurrency(calculateMonthlyBalance(expense.due_date.substring(0, 7)))}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -155,6 +258,7 @@ export default function Pagamentos() {
       </Card>
 
       {showCadastro && <CadastroPagamento onClose={handlePaymentAdded} />}
+      {showCourtExpense && <CadastroCourtExpense onClose={handleCourtExpenseAdded} />}
     </div>
   );
 }
