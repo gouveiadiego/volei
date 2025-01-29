@@ -20,6 +20,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
@@ -46,32 +47,42 @@ export function CadastroAluno({ onClose }: CadastroAlunoProps) {
     },
   });
 
-  const onSubmit = (data: FormValues) => {
-    console.log("Dados do aluno:", data);
+  const onSubmit = async (data: FormValues) => {
+    console.log("Submitting student data:", data);
     
-    // Recupera os alunos existentes do localStorage
-    const alunosAtuais = JSON.parse(localStorage.getItem("alunos") || "[]");
-    
-    // Adiciona o novo aluno com um ID único
-    const novoAluno = {
-      id: Date.now(), // Usando timestamp como ID
-      ...data,
-    };
-    
-    // Atualiza a lista de alunos
-    const novosAlunos = [...alunosAtuais, novoAluno];
-    
-    // Salva no localStorage
-    localStorage.setItem("alunos", JSON.stringify(novosAlunos));
-    
-    // Mostra mensagem de sucesso
-    toast({
-      title: "Aluno cadastrado com sucesso!",
-      description: `${data.nome} foi adicionado à lista de alunos.`,
-    });
+    try {
+      const { error } = await supabase.from("students").insert({
+        name: data.nome,
+        email: data.email,
+        phone: data.telefone,
+        active: data.status === "ativo",
+      });
 
-    // Fecha o formulário
-    onClose();
+      if (error) {
+        console.error("Error inserting student:", error);
+        toast({
+          title: "Erro ao cadastrar aluno",
+          description: "Ocorreu um erro ao salvar os dados do aluno.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("Student inserted successfully");
+      toast({
+        title: "Aluno cadastrado com sucesso!",
+        description: `${data.nome} foi adicionado à lista de alunos.`,
+      });
+
+      onClose();
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        title: "Erro ao cadastrar aluno",
+        description: "Ocorreu um erro ao salvar os dados do aluno.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
