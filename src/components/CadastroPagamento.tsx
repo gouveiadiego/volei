@@ -34,7 +34,7 @@ const formSchema = z.object({
   aluno: z.string().min(1, "Selecione um aluno"),
   mesAno: z.string().min(1, "Selecione o mês/ano"),
   valor: z.string().min(1, "Digite o valor"),
-  status: z.enum(["Pago", "Pendente"]),
+  status: z.enum(["paid", "pending", "overdue"]),
   dataPagamento: z.string().optional(),
 });
 
@@ -53,7 +53,7 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
       aluno: "",
       mesAno: "",
       valor: "",
-      status: "Pendente",
+      status: "pending",
       dataPagamento: "",
     },
   });
@@ -95,8 +95,8 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
         student_id: values.aluno,
         amount: parseFloat(values.valor),
         due_date: dueDate,
-        payment_date: values.status === "Pago" ? values.dataPagamento : null,
-        status: values.status === "Pago" ? "paid" : "pending",
+        payment_date: values.status === "paid" ? values.dataPagamento : null,
+        status: values.status,
       };
 
       console.log("Formatted payment data:", paymentData);
@@ -214,8 +214,9 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Pago">Pago</SelectItem>
-                      <SelectItem value="Pendente">Pendente</SelectItem>
+                      <SelectItem value="paid">Pago</SelectItem>
+                      <SelectItem value="pending">Pendente</SelectItem>
+                      <SelectItem value="overdue">Atrasado</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
