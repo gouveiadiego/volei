@@ -78,7 +78,7 @@ export default function Pagamentos() {
       }
 
       console.log("Payments fetched:", data);
-      setPayments(data);
+      setPayments(data || []);
     } catch (error) {
       console.error("Error:", error);
     }
@@ -98,7 +98,7 @@ export default function Pagamentos() {
       }
 
       console.log("Court expenses fetched:", data);
-      setCourtExpenses(data);
+      setCourtExpenses(data || []);
     } catch (error) {
       console.error("Error:", error);
     }
@@ -118,7 +118,7 @@ export default function Pagamentos() {
       }
 
       console.log("Additional incomes fetched:", data);
-      setAdditionalIncomes(data);
+      setAdditionalIncomes(data || []);
     } catch (error) {
       console.error("Error:", error);
     }
@@ -141,14 +141,24 @@ export default function Pagamentos() {
       setExtraExpenses(data || []);
     } catch (error) {
       console.error("Error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchPayments();
-    fetchCourtExpenses();
-    fetchAdditionalIncomes();
-    fetchExtraExpenses();
+    const fetchData = async () => {
+      setIsLoading(true);
+      await Promise.all([
+        fetchPayments(),
+        fetchCourtExpenses(),
+        fetchAdditionalIncomes(),
+        fetchExtraExpenses()
+      ]);
+      setIsLoading(false);
+    };
+    
+    fetchData();
   }, []);
 
   const handlePaymentAdded = () => {
@@ -217,6 +227,16 @@ export default function Pagamentos() {
     return monthPayments + monthAdditionalIncomes - monthExpenses;
   };
 
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <div className="flex justify-center items-center h-64">
+          <p className="text-lg">Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -255,13 +275,7 @@ export default function Pagamentos() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center">
-                    Carregando receitas...
-                  </TableCell>
-                </TableRow>
-              ) : additionalIncomes.length === 0 ? (
+              {additionalIncomes.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center">
                     Nenhuma receita adicional registrada
@@ -297,13 +311,7 @@ export default function Pagamentos() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center">
-                    Carregando despesas...
-                  </TableCell>
-                </TableRow>
-              ) : courtExpenses.length === 0 ? (
+              {courtExpenses.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center">
                     Nenhuma despesa registrada
@@ -345,13 +353,7 @@ export default function Pagamentos() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center">
-                    Carregando despesas extras...
-                  </TableCell>
-                </TableRow>
-              ) : extraExpenses.length === 0 ? (
+              {extraExpenses.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center">
                     Nenhuma despesa extra registrada
@@ -400,13 +402,7 @@ export default function Pagamentos() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center">
-                    Carregando pagamentos...
-                  </TableCell>
-                </TableRow>
-              ) : payments.length === 0 ? (
+              {payments.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center">
                     Nenhum pagamento registrado
