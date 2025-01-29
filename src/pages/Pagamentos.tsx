@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, MinusCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { CadastroPagamento } from "@/components/CadastroPagamento";
 import { CadastroCourtExpense } from "@/components/CadastroCourtExpense";
@@ -40,6 +40,7 @@ export default function Pagamentos() {
   const [showCadastro, setShowCadastro] = useState(false);
   const [showCourtExpense, setShowCourtExpense] = useState(false);
   const [showAdditionalIncome, setShowAdditionalIncome] = useState(false);
+  const [showExpense, setShowExpense] = useState(false);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [courtExpenses, setCourtExpenses] = useState<CourtExpense[]>([]);
   const [additionalIncomes, setAdditionalIncomes] = useState<AdditionalIncome[]>([]);
@@ -187,6 +188,10 @@ export default function Pagamentos() {
           <Button onClick={() => setShowCourtExpense(true)}>
             <PlusCircle className="w-4 h-4 mr-2" />
             Nova Despesa da Quadra
+          </Button>
+          <Button onClick={() => setShowExpense(true)} variant="destructive">
+            <MinusCircle className="w-4 h-4 mr-2" />
+            Nova Despesa Extra
           </Button>
           <Button onClick={() => setShowCadastro(true)}>
             <PlusCircle className="w-4 h-4 mr-2" />
@@ -344,6 +349,10 @@ export default function Pagamentos() {
       {showCadastro && <CadastroPagamento onClose={handlePaymentAdded} />}
       {showCourtExpense && <CadastroCourtExpense onClose={handleCourtExpenseAdded} />}
       {showAdditionalIncome && <CadastroAdditionalIncome onClose={handleAdditionalIncomeAdded} />}
+      {showExpense && <CadastroCourtExpense onClose={() => {
+        setShowExpense(false);
+        fetchCourtExpenses();
+      }} />}
     </div>
   );
 }
