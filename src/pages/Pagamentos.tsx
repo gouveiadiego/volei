@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MinusCircle } from "lucide-react";
+import { PlusCircle, MinusCircle, Pencil } from "lucide-react";
 import { useState, useEffect } from "react";
 import { CadastroPagamento } from "@/components/CadastroPagamento";
 import { CadastroCourtExpense } from "@/components/CadastroCourtExpense";
@@ -339,6 +339,7 @@ export default function Pagamentos() {
               <TableRow>
                 <TableHead>Data</TableHead>
                 <TableHead>Valor</TableHead>
+                <TableHead>Data do Pagamento</TableHead>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
@@ -346,13 +347,13 @@ export default function Pagamentos() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center">
+                  <TableCell colSpan={5} className="text-center">
                     Carregando despesas extras...
                   </TableCell>
                 </TableRow>
               ) : extraExpenses.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center">
+                  <TableCell colSpan={5} className="text-center">
                     Nenhuma despesa extra registrada
                   </TableCell>
                 </TableRow>
@@ -361,6 +362,9 @@ export default function Pagamentos() {
                   <TableRow key={expense.id}>
                     <TableCell>{formatDate(expense.date)}</TableCell>
                     <TableCell>{formatCurrency(expense.amount)}</TableCell>
+                    <TableCell>
+                      {expense.payment_date ? formatDate(expense.payment_date) : "-"}
+                    </TableCell>
                     <TableCell>{expense.description}</TableCell>
                     <TableCell>
                       <Button
@@ -368,6 +372,7 @@ export default function Pagamentos() {
                         size="sm"
                         onClick={() => handleEditExpense(expense)}
                       >
+                        <Pencil className="w-4 h-4 mr-2" />
                         Editar
                       </Button>
                     </TableCell>
