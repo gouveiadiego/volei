@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -22,120 +21,104 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
 const formSchema = z.object({
-  valor: z.string().min(1, "Digite o valor"),
-  mesAno: z.string().min(1, "Selecione o mês/ano"),
-  dataPagamento: z.string().optional(),
-  descricao: z.string().optional(),
+  amount: z.string().min(1, "Valor é obrigatório"),
+  dueDate: z.string().min(1, "Data de vencimento é obrigatória"),
+  paymentDate: z.string().optional(),
+  description: z.string().optional(),
 });
 
 interface CadastroCourtExpenseProps {
   onClose: () => void;
+  expenseToEdit?: {
+    id: string;
+    amount: number;
+    due_date: string;
+    payment_date: string | null;
+    description: string | null;
+  };
 }
 
-export function CadastroCourtExpense({ onClose }: CadastroCourtExpenseProps) {
+export function CadastroCourtExpense({ onClose, expenseToEdit }: CadastroCourtExpenseProps) {
   const { toast } = useToast();
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      valor: "",
-      mesAno: "",
-      dataPagamento: "",
-      descricao: "",
+      amount: expenseToEdit ? String(expenseToEdit.amount) : "",
+      dueDate: expenseToEdit ? expenseToEdit.due_date : "",
+      paymentDate: expenseToEdit?.payment_date || "",
+      description: expenseToEdit?.description || "",
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      console.log("Submitting court expense:", values);
-      
-      const [year, month] = values.mesAno.split("-");
-      const dueDate = `${year}-${month}-01`;
-      
       const expenseData = {
-        amount: parseFloat(values.valor),
-        due_date: dueDate,
-        payment_date: values.dataPagamento || null,
-        description: values.descricao || null,
+        amount: parseFloat(values.amount),
+        due_date: values.dueDate,
+        payment_date: values.paymentDate || null,
+        description: values.description || null,
       };
 
-      console.log("Formatted expense data:", expenseData);
-
-      const { error } = await supabase
-        .from("court_expenses")
-        .insert(expenseData);
-
-      if (error) {
-        console.error("Error saving court expense:", error);
-        toast({
-          variant: "destructive",
-          title: "Erro ao salvar despesa",
-          description: "Ocorreu um erro ao tentar salvar a despesa da quadra. Tente novamente.",
-        });
-        return;
+      let error;
+      
+      if (expenseToEdit) {
+        console.log("Updating court expense:", expenseData);
+        const { error: updateError } = await supabase
+          .from("court_expenses")
+          .update(expenseData)
+          .eq("id", expenseToEdit.id);
+        error = updateError;
+      } else {
+        console.log("Creating new court expense:", expenseData);
+        const { error: insertError } = await supabase
+          .from("court_expenses")
+          .insert(expenseData);
+        error = insertError;
       }
 
-      console.log("Court expense saved successfully");
+      if (error) throw error;
+
       toast({
-        title: "Despesa salva com sucesso!",
-        description: "A despesa da quadra foi registrada no sistema.",
+        title: expenseToEdit ? "Despesa atualizada com sucesso!" : "Despesa registrada com sucesso!",
       });
       onClose();
     } catch (error) {
-      console.error("Error in onSubmit:", error);
+      console.error("Error saving court expense:", error);
       toast({
         variant: "destructive",
         title: "Erro ao salvar despesa",
-        description: "Ocorreu um erro ao tentar salvar a despesa da quadra. Tente novamente.",
+        description: "Por favor, tente novamente.",
       });
     }
-  }
+  };
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nova Despesa da Quadra</DialogTitle>
-          <DialogDescription>
-            Preencha os dados da despesa da quadra abaixo
-          </DialogDescription>
+          <DialogTitle>{expenseToEdit ? "Editar Despesa da Quadra" : "Nova Despesa da Quadra"}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="mesAno"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mês/Ano</FormLabel>
-                  <FormControl>
-                    <Input type="month" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="valor"
+              name="amount"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Valor</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" {...field} />
+                    <Input type="number" step="0.01" placeholder="0.00" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
-              name="dataPagamento"
+              name="dueDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Data do Pagamento</FormLabel>
+                  <FormLabel>Data de Vencimento</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
@@ -143,13 +126,25 @@ export function CadastroCourtExpense({ onClose }: CadastroCourtExpenseProps) {
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
-              name="descricao"
+              name="paymentDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descrição (opcional)</FormLabel>
+                  <FormLabel>Data de Pagamento</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Descrição</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -157,9 +152,8 @@ export function CadastroCourtExpense({ onClose }: CadastroCourtExpenseProps) {
                 </FormItem>
               )}
             />
-
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={onClose}>
+              <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
               <Button type="submit">Salvar</Button>

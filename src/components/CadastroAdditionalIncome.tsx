@@ -1,13 +1,24 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { useToast } from "@/components/ui/use-toast";
 
 const formSchema = z.object({
   amount: z.string().min(1, "Valor é obrigatório"),
@@ -17,38 +28,61 @@ const formSchema = z.object({
 
 interface CadastroAdditionalIncomeProps {
   onClose: () => void;
+  incomeToEdit?: {
+    id: string;
+    amount: number;
+    date: string;
+    description: string;
+  };
 }
 
-export function CadastroAdditionalIncome({ onClose }: CadastroAdditionalIncomeProps) {
+export function CadastroAdditionalIncome({ onClose, incomeToEdit }: CadastroAdditionalIncomeProps) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      amount: "",
-      date: format(new Date(), "yyyy-MM-dd"),
-      description: "",
+      amount: incomeToEdit ? String(incomeToEdit.amount) : "",
+      date: incomeToEdit ? incomeToEdit.date : "",
+      description: incomeToEdit?.description || "",
     },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const { error } = await supabase.from("additional_income").insert({
+      const incomeData = {
         amount: parseFloat(values.amount),
         date: values.date,
         description: values.description,
-      });
+      };
+
+      let error;
+      
+      if (incomeToEdit) {
+        console.log("Updating additional income:", incomeData);
+        const { error: updateError } = await supabase
+          .from("additional_income")
+          .update(incomeData)
+          .eq("id", incomeToEdit.id);
+        error = updateError;
+      } else {
+        console.log("Creating new additional income:", incomeData);
+        const { error: insertError } = await supabase
+          .from("additional_income")
+          .insert(incomeData);
+        error = insertError;
+      }
 
       if (error) throw error;
 
       toast({
-        title: "Receita adicional registrada com sucesso!",
+        title: incomeToEdit ? "Receita atualizada com sucesso!" : "Receita registrada com sucesso!",
       });
       onClose();
     } catch (error) {
-      console.error("Error adding additional income:", error);
+      console.error("Error saving additional income:", error);
       toast({
         variant: "destructive",
-        title: "Erro ao registrar receita adicional",
+        title: "Erro ao salvar receita",
         description: "Por favor, tente novamente.",
       });
     }
@@ -58,7 +92,7 @@ export function CadastroAdditionalIncome({ onClose }: CadastroAdditionalIncomePr
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nova Receita Adicional</DialogTitle>
+          <DialogTitle>{incomeToEdit ? "Editar Receita Adicional" : "Nova Receita Adicional"}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -71,6 +105,7 @@ export function CadastroAdditionalIncome({ onClose }: CadastroAdditionalIncomePr
                   <FormControl>
                     <Input type="number" step="0.01" placeholder="0.00" {...field} />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -83,6 +118,7 @@ export function CadastroAdditionalIncome({ onClose }: CadastroAdditionalIncomePr
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -95,6 +131,7 @@ export function CadastroAdditionalIncome({ onClose }: CadastroAdditionalIncomePr
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />

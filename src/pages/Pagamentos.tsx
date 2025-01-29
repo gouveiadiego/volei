@@ -55,6 +55,8 @@ export default function Pagamentos() {
   const [additionalIncomes, setAdditionalIncomes] = useState<AdditionalIncome[]>([]);
   const [extraExpenses, setExtraExpenses] = useState<ExtraExpense[]>([]);
   const [expenseToEdit, setExpenseToEdit] = useState<ExtraExpense | undefined>();
+  const [incomeToEdit, setIncomeToEdit] = useState<AdditionalIncome | undefined>();
+  const [courtExpenseToEdit, setCourtExpenseToEdit] = useState<CourtExpense | undefined>();
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchPayments = async () => {
@@ -168,11 +170,13 @@ export default function Pagamentos() {
 
   const handleCourtExpenseAdded = () => {
     setShowCourtExpense(false);
+    setCourtExpenseToEdit(undefined);
     fetchCourtExpenses();
   };
 
   const handleAdditionalIncomeAdded = () => {
     setShowAdditionalIncome(false);
+    setIncomeToEdit(undefined);
     fetchAdditionalIncomes();
   };
 
@@ -180,6 +184,16 @@ export default function Pagamentos() {
     setShowExpense(false);
     setExpenseToEdit(undefined);
     fetchExtraExpenses();
+  };
+
+  const handleEditIncome = (income: AdditionalIncome) => {
+    setIncomeToEdit(income);
+    setShowAdditionalIncome(true);
+  };
+
+  const handleEditCourtExpense = (expense: CourtExpense) => {
+    setCourtExpenseToEdit(expense);
+    setShowCourtExpense(true);
   };
 
   const handleEditExpense = (expense: ExtraExpense) => {
@@ -272,12 +286,13 @@ export default function Pagamentos() {
                 <TableHead>Data</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead>Descrição</TableHead>
+                <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {additionalIncomes.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center">
+                  <TableCell colSpan={4} className="text-center">
                     Nenhuma receita adicional registrada
                   </TableCell>
                 </TableRow>
@@ -287,6 +302,16 @@ export default function Pagamentos() {
                     <TableCell>{formatDate(income.date)}</TableCell>
                     <TableCell>{formatCurrency(income.amount)}</TableCell>
                     <TableCell>{income.description}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditIncome(income)}
+                      >
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Editar
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -308,12 +333,13 @@ export default function Pagamentos() {
                 <TableHead>Data do Pagamento</TableHead>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Saldo do Mês</TableHead>
+                <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {courtExpenses.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center">
+                  <TableCell colSpan={6} className="text-center">
                     Nenhuma despesa registrada
                   </TableCell>
                 </TableRow>
@@ -328,6 +354,16 @@ export default function Pagamentos() {
                     <TableCell>{expense.description || "-"}</TableCell>
                     <TableCell>
                       {formatCurrency(calculateMonthlyBalance(expense.due_date.substring(0, 7)))}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditCourtExpense(expense)}
+                      >
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Editar
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
@@ -439,8 +475,18 @@ export default function Pagamentos() {
       </Card>
 
       {showCadastro && <CadastroPagamento onClose={handlePaymentAdded} />}
-      {showCourtExpense && <CadastroCourtExpense onClose={handleCourtExpenseAdded} />}
-      {showAdditionalIncome && <CadastroAdditionalIncome onClose={handleAdditionalIncomeAdded} />}
+      {showCourtExpense && (
+        <CadastroCourtExpense
+          onClose={handleCourtExpenseAdded}
+          expenseToEdit={courtExpenseToEdit}
+        />
+      )}
+      {showAdditionalIncome && (
+        <CadastroAdditionalIncome
+          onClose={handleAdditionalIncomeAdded}
+          incomeToEdit={incomeToEdit}
+        />
+      )}
       {showExpense && (
         <CadastroExpense
           onClose={handleExpenseAdded}
