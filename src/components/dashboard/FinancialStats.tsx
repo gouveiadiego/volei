@@ -2,11 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import {
   BarChart,
   Bar,
   XAxis,
@@ -16,7 +11,7 @@ import {
   Legend,
   ReferenceLine,
 } from "recharts";
-import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { format, parse, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const chartConfig = {
@@ -48,15 +43,22 @@ export const FinancialStats = () => {
     queryKey: ["financial-stats"],
     queryFn: async () => {
       console.log("Fetching financial data...");
-      const months = Array.from({ length: 6 }, (_, i) => {
-        const date = subMonths(new Date(), i);
-        return {
-          start: format(startOfMonth(date), "yyyy-MM-dd"),
-          end: format(endOfMonth(date), "yyyy-MM-dd"),
-          month: format(date, "MMM", { locale: ptBR }),
-          year: format(date, "yyyy"),
-        };
-      }).reverse();
+      
+      // Define os meses que queremos mostrar (dezembro/2024 até o mês atual)
+      const startDate = parse("2024-12", "yyyy-MM", new Date());
+      const currentDate = new Date();
+      const months = [];
+      let currentMonth = startDate;
+
+      while (currentMonth <= currentDate) {
+        months.push({
+          start: format(startOfMonth(currentMonth), "yyyy-MM-dd"),
+          end: format(endOfMonth(currentMonth), "yyyy-MM-dd"),
+          month: format(currentMonth, "MMM", { locale: ptBR }),
+          year: format(currentMonth, "yyyy"),
+        });
+        currentMonth = new Date(currentMonth.setMonth(currentMonth.getMonth() + 1));
+      }
 
       const monthlyData = await Promise.all(
         months.map(async ({ start, end, month, year }) => {
