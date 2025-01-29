@@ -108,9 +108,9 @@ const FinancialStats = () => {
               cursor={{ fill: '#22C55E', opacity: 0.1 }}
             />
             <Bar 
-              dataKey="overdue" 
-              name="Atrasados" 
-              fill="#EF4444" 
+              dataKey="paid" 
+              name="Pagos" 
+              fill="#22C55E" 
               stackId="a" 
             />
             <Bar
@@ -120,9 +120,9 @@ const FinancialStats = () => {
               stackId="a"
             />
             <Bar
-              dataKey="paid"
-              name="Pagos"
-              fill="#22C55E"
+              dataKey="overdue"
+              name="Atrasados"
+              fill="#EF4444"
               stackId="a"
             />
           </BarChart>
