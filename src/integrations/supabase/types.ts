@@ -92,6 +92,33 @@ export type Database = {
         }
         Relationships: []
       }
+      extra_expenses: {
+        Row: {
+          amount: number
+          created_at: string | null
+          date: string
+          description: string | null
+          id: string
+          payment_date: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          date: string
+          description?: string | null
+          id?: string
+          payment_date?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          id?: string
+          payment_date?: string | null
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number

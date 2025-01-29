@@ -17,39 +17,63 @@ const formSchema = z.object({
 
 interface CadastroExpenseProps {
   onClose: () => void;
+  expenseToEdit?: {
+    id: string;
+    amount: number;
+    date: string;
+    description: string;
+    payment_date: string | null;
+  };
 }
 
-export function CadastroExpense({ onClose }: CadastroExpenseProps) {
+export function CadastroExpense({ onClose, expenseToEdit }: CadastroExpenseProps) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      amount: "",
-      date: format(new Date(), "yyyy-MM-dd"),
-      description: "",
+      amount: expenseToEdit ? String(expenseToEdit.amount) : "",
+      date: expenseToEdit ? expenseToEdit.date : format(new Date(), "yyyy-MM-dd"),
+      description: expenseToEdit?.description || "",
     },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const { error } = await supabase.from("court_expenses").insert({
+      const expenseData = {
         amount: parseFloat(values.amount),
-        due_date: values.date,
+        date: values.date,
         payment_date: values.date,
         description: values.description,
-      });
+      };
+
+      let error;
+      
+      if (expenseToEdit) {
+        console.log("Updating expense:", expenseData);
+        const { error: updateError } = await supabase
+          .from("extra_expenses")
+          .update(expenseData)
+          .eq("id", expenseToEdit.id);
+        error = updateError;
+      } else {
+        console.log("Creating new expense:", expenseData);
+        const { error: insertError } = await supabase
+          .from("extra_expenses")
+          .insert(expenseData);
+        error = insertError;
+      }
 
       if (error) throw error;
 
       toast({
-        title: "Despesa registrada com sucesso!",
+        title: expenseToEdit ? "Despesa atualizada com sucesso!" : "Despesa registrada com sucesso!",
       });
       onClose();
     } catch (error) {
-      console.error("Error adding expense:", error);
+      console.error("Error saving expense:", error);
       toast({
         variant: "destructive",
-        title: "Erro ao registrar despesa",
+        title: "Erro ao salvar despesa",
         description: "Por favor, tente novamente.",
       });
     }
@@ -59,7 +83,7 @@ export function CadastroExpense({ onClose }: CadastroExpenseProps) {
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nova Despesa Extra</DialogTitle>
+          <DialogTitle>{expenseToEdit ? "Editar Despesa Extra" : "Nova Despesa Extra"}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

@@ -37,6 +37,14 @@ interface AdditionalIncome {
   description: string;
 }
 
+interface ExtraExpense {
+  id: string;
+  amount: number;
+  date: string;
+  payment_date: string | null;
+  description: string;
+}
+
 export default function Pagamentos() {
   const [showCadastro, setShowCadastro] = useState(false);
   const [showCourtExpense, setShowCourtExpense] = useState(false);
@@ -45,6 +53,8 @@ export default function Pagamentos() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [courtExpenses, setCourtExpenses] = useState<CourtExpense[]>([]);
   const [additionalIncomes, setAdditionalIncomes] = useState<AdditionalIncome[]>([]);
+  const [extraExpenses, setExtraExpenses] = useState<ExtraExpense[]>([]);
+  const [expenseToEdit, setExpenseToEdit] = useState<ExtraExpense | undefined>();
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchPayments = async () => {
@@ -111,8 +121,26 @@ export default function Pagamentos() {
       setAdditionalIncomes(data);
     } catch (error) {
       console.error("Error:", error);
-    } finally {
-      setIsLoading(false);
+    }
+  };
+
+  const fetchExtraExpenses = async () => {
+    try {
+      console.log("Fetching extra expenses...");
+      const { data, error } = await supabase
+        .from("extra_expenses")
+        .select("*")
+        .order("date", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching extra expenses:", error);
+        return;
+      }
+
+      console.log("Extra expenses fetched:", data);
+      setExtraExpenses(data || []);
+    } catch (error) {
+      console.error("Error:", error);
     }
   };
 
@@ -120,6 +148,7 @@ export default function Pagamentos() {
     fetchPayments();
     fetchCourtExpenses();
     fetchAdditionalIncomes();
+    fetchExtraExpenses();
   }, []);
 
   const handlePaymentAdded = () => {
@@ -139,7 +168,13 @@ export default function Pagamentos() {
 
   const handleExpenseAdded = () => {
     setShowExpense(false);
-    fetchCourtExpenses();
+    setExpenseToEdit(undefined);
+    fetchExtraExpenses();
+  };
+
+  const handleEditExpense = (expense: ExtraExpense) => {
+    setExpenseToEdit(expense);
+    setShowExpense(true);
   };
 
   const formatStatus = (status: string) => {
@@ -296,6 +331,56 @@ export default function Pagamentos() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Despesas Extras</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Data</TableHead>
+                <TableHead>Valor</TableHead>
+                <TableHead>Descrição</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center">
+                    Carregando despesas extras...
+                  </TableCell>
+                </TableRow>
+              ) : extraExpenses.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center">
+                    Nenhuma despesa extra registrada
+                  </TableCell>
+                </TableRow>
+              ) : (
+                extraExpenses.map((expense) => (
+                  <TableRow key={expense.id}>
+                    <TableCell>{formatDate(expense.date)}</TableCell>
+                    <TableCell>{formatCurrency(expense.amount)}</TableCell>
+                    <TableCell>{expense.description}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditExpense(expense)}
+                      >
+                        Editar
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Lista de Pagamentos</CardTitle>
         </CardHeader>
         <CardContent>
@@ -355,7 +440,12 @@ export default function Pagamentos() {
       {showCadastro && <CadastroPagamento onClose={handlePaymentAdded} />}
       {showCourtExpense && <CadastroCourtExpense onClose={handleCourtExpenseAdded} />}
       {showAdditionalIncome && <CadastroAdditionalIncome onClose={handleAdditionalIncomeAdded} />}
-      {showExpense && <CadastroExpense onClose={handleExpenseAdded} />}
+      {showExpense && (
+        <CadastroExpense
+          onClose={handleExpenseAdded}
+          expenseToEdit={expenseToEdit}
+        />
+      )}
     </div>
   );
 }
