@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { CadastroPagamento } from "@/components/CadastroPagamento";
 import { CadastroCourtExpense } from "@/components/CadastroCourtExpense";
 import { CadastroAdditionalIncome } from "@/components/CadastroAdditionalIncome";
+import { CadastroExpense } from "@/components/CadastroExpense";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -134,6 +135,11 @@ export default function Pagamentos() {
   const handleAdditionalIncomeAdded = () => {
     setShowAdditionalIncome(false);
     fetchAdditionalIncomes();
+  };
+
+  const handleExpenseAdded = () => {
+    setShowExpense(false);
+    fetchCourtExpenses();
   };
 
   const formatStatus = (status: string) => {
@@ -349,10 +355,7 @@ export default function Pagamentos() {
       {showCadastro && <CadastroPagamento onClose={handlePaymentAdded} />}
       {showCourtExpense && <CadastroCourtExpense onClose={handleCourtExpenseAdded} />}
       {showAdditionalIncome && <CadastroAdditionalIncome onClose={handleAdditionalIncomeAdded} />}
-      {showExpense && <CadastroCourtExpense onClose={() => {
-        setShowExpense(false);
-        fetchCourtExpenses();
-      }} />}
+      {showExpense && <CadastroExpense onClose={handleExpenseAdded} />}
     </div>
   );
 }
