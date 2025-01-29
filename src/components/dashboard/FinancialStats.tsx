@@ -106,13 +106,13 @@ const FinancialStats = () => {
             <Bar
               dataKey="pending"
               name="Pendentes"
-              fill="#EAB308"
+              fill="#86EFAC"
               stackId="a"
             />
             <Bar
               dataKey="overdue"
               name="Atrasados"
-              fill="#EF4444"
+              fill="#4ADE80"
               stackId="a"
             />
           </BarChart>
