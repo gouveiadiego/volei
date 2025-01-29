@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Users, CreditCard, Calendar } from "lucide-react";
+import { Users, CreditCard, Calendar, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -15,6 +15,9 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 
 const Index = () => {
@@ -53,6 +56,38 @@ const Index = () => {
     },
   });
 
+  // Fetch total additional income
+  const { data: totalAdditionalIncome = 0 } = useQuery({
+    queryKey: ["additional-income-total"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("additional_income")
+        .select("amount");
+      return data?.reduce((acc, curr) => acc + Number(curr.amount), 0) || 0;
+    },
+  });
+
+  // Fetch total expenses
+  const { data: totalExpenses = 0 } = useQuery({
+    queryKey: ["expenses-total"],
+    queryFn: async () => {
+      const { data: courtExpenses } = await supabase
+        .from("court_expenses")
+        .select("amount");
+      const { data: extraExpenses } = await supabase
+        .from("extra_expenses")
+        .select("amount");
+      
+      const courtTotal = courtExpenses?.reduce((acc, curr) => acc + Number(curr.amount), 0) || 0;
+      const extraTotal = extraExpenses?.reduce((acc, curr) => acc + Number(curr.amount), 0) || 0;
+      
+      return courtTotal + extraTotal;
+    },
+  });
+
+  // Calculate total balance
+  const totalBalance = (totalPayments + totalAdditionalIncome) - totalExpenses;
+
   // Fetch payment data for chart
   const { data: paymentsByMonth = [] } = useQuery({
     queryKey: ["payments-by-month"],
@@ -81,6 +116,15 @@ const Index = () => {
     },
   });
 
+  // Financial overview data for pie chart
+  const financialOverview = [
+    { name: "Pagamentos", value: totalPayments },
+    { name: "Receitas Extras", value: totalAdditionalIncome },
+    { name: "Despesas", value: totalExpenses },
+  ];
+
+  const COLORS = ["#22C55E", "#3B82F6", "#EF4444"];
+
   const chartConfig = {
     paid: {
       label: "Pagos",
@@ -105,6 +149,13 @@ const Index = () => {
     },
   };
 
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-primary">Dashboard</h1>
@@ -122,14 +173,47 @@ const Index = () => {
 
         <Card className="p-6">
           <div className="flex items-center space-x-4">
+            <TrendingUp className="w-8 h-8 text-emerald-500" />
+            <div>
+              <p className="text-sm text-gray-500">Receitas Totais</p>
+              <p className="text-2xl font-bold text-emerald-500">
+                {formatCurrency(totalPayments + totalAdditionalIncome)}
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center space-x-4">
+            <TrendingDown className="w-8 h-8 text-red-500" />
+            <div>
+              <p className="text-sm text-gray-500">Despesas Totais</p>
+              <p className="text-2xl font-bold text-red-500">
+                {formatCurrency(totalExpenses)}
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center space-x-4">
+            <DollarSign className="w-8 h-8 text-primary" />
+            <div>
+              <p className="text-sm text-gray-500">Saldo Total</p>
+              <p className={`text-2xl font-bold ${totalBalance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                {formatCurrency(totalBalance)}
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center space-x-4">
             <CreditCard className="w-8 h-8 text-primary" />
             <div>
               <p className="text-sm text-gray-500">Pagamentos Recebidos</p>
               <p className="text-2xl font-bold">
-                {new Intl.NumberFormat("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                }).format(totalPayments)}
+                {formatCurrency(totalPayments)}
               </p>
             </div>
           </div>
@@ -146,7 +230,7 @@ const Index = () => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Pagamentos por Mês</h2>
           <div className="h-[400px]">
@@ -156,11 +240,7 @@ const Index = () => {
                 <XAxis dataKey="month" />
                 <YAxis
                   tickFormatter={(value) =>
-                    new Intl.NumberFormat("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                      notation: "compact",
-                    }).format(value)
+                    formatCurrency(value)
                   }
                 />
                 <ChartTooltip content={<ChartTooltipContent />} />
@@ -179,6 +259,31 @@ const Index = () => {
                 />
               </BarChart>
             </ChartContainer>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">Visão Geral Financeira</h2>
+          <div className="h-[400px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={financialOverview}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value }) => `${name}: ${formatCurrency(value)}`}
+                  outerRadius={150}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {financialOverview.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </Card>
       </div>
