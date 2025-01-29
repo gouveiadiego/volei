@@ -5,6 +5,7 @@ import { PlusCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { CadastroPagamento } from "@/components/CadastroPagamento";
 import { CadastroCourtExpense } from "@/components/CadastroCourtExpense";
+import { CadastroAdditionalIncome } from "@/components/CadastroAdditionalIncome";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -28,11 +29,20 @@ interface CourtExpense {
   description: string | null;
 }
 
+interface AdditionalIncome {
+  id: string;
+  amount: number;
+  date: string;
+  description: string;
+}
+
 export default function Pagamentos() {
   const [showCadastro, setShowCadastro] = useState(false);
   const [showCourtExpense, setShowCourtExpense] = useState(false);
+  const [showAdditionalIncome, setShowAdditionalIncome] = useState(false);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [courtExpenses, setCourtExpenses] = useState<CourtExpense[]>([]);
+  const [additionalIncomes, setAdditionalIncomes] = useState<AdditionalIncome[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchPayments = async () => {
@@ -79,6 +89,26 @@ export default function Pagamentos() {
       setCourtExpenses(data);
     } catch (error) {
       console.error("Error:", error);
+    }
+  };
+
+  const fetchAdditionalIncomes = async () => {
+    try {
+      console.log("Fetching additional incomes...");
+      const { data, error } = await supabase
+        .from("additional_income")
+        .select("*")
+        .order("date", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching additional incomes:", error);
+        return;
+      }
+
+      console.log("Additional incomes fetched:", data);
+      setAdditionalIncomes(data);
+    } catch (error) {
+      console.error("Error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -87,6 +117,7 @@ export default function Pagamentos() {
   useEffect(() => {
     fetchPayments();
     fetchCourtExpenses();
+    fetchAdditionalIncomes();
   }, []);
 
   const handlePaymentAdded = () => {
@@ -97,6 +128,11 @@ export default function Pagamentos() {
   const handleCourtExpenseAdded = () => {
     setShowCourtExpense(false);
     fetchCourtExpenses();
+  };
+
+  const handleAdditionalIncomeAdded = () => {
+    setShowAdditionalIncome(false);
+    fetchAdditionalIncomes();
   };
 
   const formatStatus = (status: string) => {
@@ -132,7 +168,11 @@ export default function Pagamentos() {
       .filter(expense => expense.due_date.startsWith(month))
       .reduce((sum, expense) => sum + expense.amount, 0);
 
-    return monthPayments - monthExpenses;
+    const monthAdditionalIncomes = additionalIncomes
+      .filter(income => income.date.startsWith(month))
+      .reduce((sum, income) => sum + income.amount, 0);
+
+    return monthPayments + monthAdditionalIncomes - monthExpenses;
   };
 
   return (
@@ -140,6 +180,10 @@ export default function Pagamentos() {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Pagamentos</h1>
         <div className="space-x-2">
+          <Button onClick={() => setShowAdditionalIncome(true)}>
+            <PlusCircle className="w-4 h-4 mr-2" />
+            Nova Receita Adicional
+          </Button>
           <Button onClick={() => setShowCourtExpense(true)}>
             <PlusCircle className="w-4 h-4 mr-2" />
             Nova Despesa da Quadra
@@ -150,6 +194,46 @@ export default function Pagamentos() {
           </Button>
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Receitas Adicionais</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Data</TableHead>
+                <TableHead>Valor</TableHead>
+                <TableHead>Descrição</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center">
+                    Carregando receitas...
+                  </TableCell>
+                </TableRow>
+              ) : additionalIncomes.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center">
+                    Nenhuma receita adicional registrada
+                  </TableCell>
+                </TableRow>
+              ) : (
+                additionalIncomes.map((income) => (
+                  <TableRow key={income.id}>
+                    <TableCell>{formatDate(income.date)}</TableCell>
+                    <TableCell>{formatCurrency(income.amount)}</TableCell>
+                    <TableCell>{income.description}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -259,6 +343,7 @@ export default function Pagamentos() {
 
       {showCadastro && <CadastroPagamento onClose={handlePaymentAdded} />}
       {showCourtExpense && <CadastroCourtExpense onClose={handleCourtExpenseAdded} />}
+      {showAdditionalIncome && <CadastroAdditionalIncome onClose={handleAdditionalIncomeAdded} />}
     </div>
   );
 }
