@@ -108,9 +108,9 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
                     </FormControl>
                     <SelectContent>
                       {isLoading ? (
-                        <SelectItem value="">Carregando alunos...</SelectItem>
+                        <SelectItem value="loading">Carregando alunos...</SelectItem>
                       ) : students.length === 0 ? (
-                        <SelectItem value="">Nenhum aluno cadastrado</SelectItem>
+                        <SelectItem value="no-students">Nenhum aluno cadastrado</SelectItem>
                       ) : (
                         students.map((student) => (
                           <SelectItem key={student.id} value={student.id}>
