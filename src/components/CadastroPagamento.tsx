@@ -89,7 +89,7 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
       console.log("Submitting payment:", values);
       
       const [year, month] = values.mesAno.split("-");
-      const dueDate = `${year}-${month}-01`; // Define due date as first day of the month
+      const dueDate = `${year}-${month}-01`;
       
       const paymentData = {
         student_id: values.aluno,
