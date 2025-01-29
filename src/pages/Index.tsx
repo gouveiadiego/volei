@@ -3,11 +3,6 @@ import { Users, CreditCard, Calendar, TrendingUp, TrendingDown, DollarSign } fro
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import {
   BarChart,
   Bar,
   XAxis,
@@ -21,6 +16,7 @@ import {
 } from "recharts";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import StudentStatusList from "@/components/dashboard/StudentStatusList";
 
 const Index = () => {
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -238,11 +234,15 @@ const Index = () => {
         </Card>
       </div>
 
+      <div className="grid grid-cols-1 gap-6">
+        <StudentStatusList />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Pagamentos por Mês</h2>
           <div className="h-[400px]">
-            <ChartContainer config={chartConfig}>
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart data={paymentsByMonth}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
@@ -251,7 +251,7 @@ const Index = () => {
                     formatCurrency(value)
                   }
                 />
-                <ChartTooltip content={<ChartTooltipContent />} />
+                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
                 <Bar dataKey="paid" name="Pagos" stackId="a" fill="var(--color-paid)" />
                 <Bar
                   dataKey="pending"
@@ -266,7 +266,7 @@ const Index = () => {
                   fill="var(--color-overdue)"
                 />
               </BarChart>
-            </ChartContainer>
+            </ResponsiveContainer>
           </div>
         </Card>
 
