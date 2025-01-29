@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MinusCircle, Pencil } from "lucide-react";
+import { PlusCircle, MinusCircle, Pencil, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { CadastroPagamento } from "@/components/CadastroPagamento";
 import { CadastroCourtExpense } from "@/components/CadastroCourtExpense";
@@ -10,6 +10,7 @@ import { CadastroExpense } from "@/components/CadastroExpense";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
 
 interface Payment {
   id: string;
@@ -58,6 +59,7 @@ export default function Pagamentos() {
   const [incomeToEdit, setIncomeToEdit] = useState<AdditionalIncome | undefined>();
   const [courtExpenseToEdit, setCourtExpenseToEdit] = useState<CourtExpense | undefined>();
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   const fetchPayments = async () => {
     try {
@@ -201,6 +203,78 @@ export default function Pagamentos() {
     setShowExpense(true);
   };
 
+  const handleDeleteIncome = async (id: string) => {
+    try {
+      console.log("Deleting additional income:", id);
+      const { error } = await supabase
+        .from("additional_income")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Receita removida com sucesso!",
+      });
+      fetchAdditionalIncomes();
+    } catch (error) {
+      console.error("Error deleting additional income:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao remover receita",
+        description: "Por favor, tente novamente.",
+      });
+    }
+  };
+
+  const handleDeleteCourtExpense = async (id: string) => {
+    try {
+      console.log("Deleting court expense:", id);
+      const { error } = await supabase
+        .from("court_expenses")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Despesa da quadra removida com sucesso!",
+      });
+      fetchCourtExpenses();
+    } catch (error) {
+      console.error("Error deleting court expense:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao remover despesa da quadra",
+        description: "Por favor, tente novamente.",
+      });
+    }
+  };
+
+  const handleDeleteExpense = async (id: string) => {
+    try {
+      console.log("Deleting extra expense:", id);
+      const { error } = await supabase
+        .from("extra_expenses")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Despesa extra removida com sucesso!",
+      });
+      fetchExtraExpenses();
+    } catch (error) {
+      console.error("Error deleting extra expense:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao remover despesa extra",
+        description: "Por favor, tente novamente.",
+      });
+    }
+  };
+
   const formatStatus = (status: string) => {
     switch (status) {
       case "paid":
@@ -303,14 +377,25 @@ export default function Pagamentos() {
                     <TableCell>{formatCurrency(income.amount)}</TableCell>
                     <TableCell>{income.description}</TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditIncome(income)}
-                      >
-                        <Pencil className="w-4 h-4 mr-2" />
-                        Editar
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditIncome(income)}
+                        >
+                          <Pencil className="w-4 h-4 mr-2" />
+                          Editar
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteIncome(income.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Remover
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -356,14 +441,25 @@ export default function Pagamentos() {
                       {formatCurrency(calculateMonthlyBalance(expense.due_date.substring(0, 7)))}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditCourtExpense(expense)}
-                      >
-                        <Pencil className="w-4 h-4 mr-2" />
-                        Editar
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditCourtExpense(expense)}
+                        >
+                          <Pencil className="w-4 h-4 mr-2" />
+                          Editar
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteCourtExpense(expense.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Remover
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -405,14 +501,25 @@ export default function Pagamentos() {
                     </TableCell>
                     <TableCell>{expense.description}</TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditExpense(expense)}
-                      >
-                        <Pencil className="w-4 h-4 mr-2" />
-                        Editar
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditExpense(expense)}
+                        >
+                          <Pencil className="w-4 h-4 mr-2" />
+                          Editar
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteExpense(expense.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Remover
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
