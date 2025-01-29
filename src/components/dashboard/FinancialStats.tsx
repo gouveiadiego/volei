@@ -108,21 +108,21 @@ const FinancialStats = () => {
               cursor={{ fill: '#22C55E', opacity: 0.1 }}
             />
             <Bar 
-              dataKey="paid" 
-              name="Pagos" 
-              fill="#22C55E" 
+              dataKey="overdue" 
+              name="Atrasados" 
+              fill="#EF4444" 
               stackId="a" 
             />
             <Bar
               dataKey="pending"
               name="Pendentes"
-              fill="#86EFAC"
+              fill="#FCD34D"
               stackId="a"
             />
             <Bar
-              dataKey="overdue"
-              name="Atrasados"
-              fill="#4ADE80"
+              dataKey="paid"
+              name="Pagos"
+              fill="#22C55E"
               stackId="a"
             />
           </BarChart>
