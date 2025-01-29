@@ -9,7 +9,106 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      attendance: {
+        Row: {
+          class_date: string
+          created_at: string | null
+          id: string
+          present: boolean
+          student_id: string | null
+        }
+        Insert: {
+          class_date: string
+          created_at?: string | null
+          id?: string
+          present?: boolean
+          student_id?: string | null
+        }
+        Update: {
+          class_date?: string
+          created_at?: string | null
+          id?: string
+          present?: boolean
+          student_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          due_date: string
+          id: string
+          payment_date: string | null
+          status: Database["public"]["Enums"]["payment_status"] | null
+          student_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          due_date: string
+          id?: string
+          payment_date?: string | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          student_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          due_date?: string
+          id?: string
+          payment_date?: string | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          student_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          active: boolean | null
+          birth_date: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          birth_date?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          birth_date?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +117,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      payment_status: "pending" | "paid" | "overdue"
     }
     CompositeTypes: {
       [_ in never]: never
