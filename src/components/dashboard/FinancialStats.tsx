@@ -72,10 +72,13 @@ const FinancialStats = () => {
 
   return (
     <Card className="p-6 bg-white">
-      <h2 className="text-xl font-semibold mb-4 text-foreground">Pagamentos por Mês</h2>
+      <h2 className="text-xl font-semibold mb-4 text-green-600">Pagamentos por Mês</h2>
       <div className="h-[400px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={paymentsByMonth} style={{ backgroundColor: 'white' }}>
+          <BarChart 
+            data={paymentsByMonth} 
+            style={{ backgroundColor: 'white' }}
+          >
             <CartesianGrid 
               strokeDasharray="3 3" 
               stroke="#22C55E" 
@@ -85,11 +88,13 @@ const FinancialStats = () => {
               dataKey="month" 
               stroke="#22C55E"
               tick={{ fill: '#22C55E' }}
+              axisLine={{ stroke: '#22C55E' }}
             />
             <YAxis
               tickFormatter={(value) => formatCurrency(value)}
               stroke="#22C55E"
               tick={{ fill: '#22C55E' }}
+              axisLine={{ stroke: '#22C55E' }}
             />
             <Tooltip
               contentStyle={{
@@ -100,6 +105,7 @@ const FinancialStats = () => {
               }}
               formatter={(value) => formatCurrency(Number(value))}
               labelStyle={{ color: '#22C55E' }}
+              cursor={{ fill: '#22C55E', opacity: 0.1 }}
             />
             <Bar 
               dataKey="paid" 
