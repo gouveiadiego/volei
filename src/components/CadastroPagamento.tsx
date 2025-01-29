@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -27,6 +28,7 @@ import * as z from "zod";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
+import { useToast } from "@/components/ui/use-toast";
 
 const formSchema = z.object({
   aluno: z.string().min(1, "Selecione um aluno"),
@@ -43,6 +45,7 @@ interface CadastroPagamentoProps {
 export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
   const [students, setStudents] = useState<Tables<"students">[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -81,9 +84,51 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
     fetchStudents();
   }, []);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    onClose();
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      console.log("Submitting payment:", values);
+      
+      const [year, month] = values.mesAno.split("-");
+      const dueDate = `${year}-${month}-01`; // Define due date as first day of the month
+      
+      const paymentData = {
+        student_id: values.aluno,
+        amount: parseFloat(values.valor),
+        due_date: dueDate,
+        payment_date: values.status === "Pago" ? values.dataPagamento : null,
+        status: values.status === "Pago" ? "paid" : "pending",
+      };
+
+      console.log("Formatted payment data:", paymentData);
+
+      const { error } = await supabase
+        .from("payments")
+        .insert(paymentData);
+
+      if (error) {
+        console.error("Error saving payment:", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao salvar pagamento",
+          description: "Ocorreu um erro ao tentar salvar o pagamento. Tente novamente.",
+        });
+        return;
+      }
+
+      console.log("Payment saved successfully");
+      toast({
+        title: "Pagamento salvo com sucesso!",
+        description: "O pagamento foi registrado no sistema.",
+      });
+      onClose();
+    } catch (error) {
+      console.error("Error in onSubmit:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao salvar pagamento",
+        description: "Ocorreu um erro ao tentar salvar o pagamento. Tente novamente.",
+      });
+    }
   }
 
   return (
@@ -91,6 +136,9 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Novo Pagamento</DialogTitle>
+          <DialogDescription>
+            Preencha os dados do pagamento abaixo
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -108,9 +156,9 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
                     </FormControl>
                     <SelectContent>
                       {isLoading ? (
-                        <SelectItem value="loading">Carregando alunos...</SelectItem>
+                        <SelectItem value="loading" disabled>Carregando alunos...</SelectItem>
                       ) : students.length === 0 ? (
-                        <SelectItem value="no-students">Nenhum aluno cadastrado</SelectItem>
+                        <SelectItem value="no-students" disabled>Nenhum aluno cadastrado</SelectItem>
                       ) : (
                         students.map((student) => (
                           <SelectItem key={student.id} value={student.id}>
