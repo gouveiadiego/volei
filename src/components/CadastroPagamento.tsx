@@ -24,6 +24,9 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Tables } from "@/integrations/supabase/types";
 
 const formSchema = z.object({
   aluno: z.string().min(1, "Selecione um aluno"),
@@ -38,6 +41,9 @@ interface CadastroPagamentoProps {
 }
 
 export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
+  const [students, setStudents] = useState<Tables<"students">[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -48,6 +54,32 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
       dataPagamento: "",
     },
   });
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        console.log("Fetching students for payment form...");
+        const { data, error } = await supabase
+          .from("students")
+          .select("*")
+          .order("name");
+
+        if (error) {
+          console.error("Error fetching students:", error);
+          return;
+        }
+
+        console.log("Students fetched successfully:", data);
+        setStudents(data);
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStudents();
+  }, []);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
@@ -75,8 +107,17 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="1">João Silva</SelectItem>
-                      <SelectItem value="2">Maria Santos</SelectItem>
+                      {isLoading ? (
+                        <SelectItem value="">Carregando alunos...</SelectItem>
+                      ) : students.length === 0 ? (
+                        <SelectItem value="">Nenhum aluno cadastrado</SelectItem>
+                      ) : (
+                        students.map((student) => (
+                          <SelectItem key={student.id} value={student.id}>
+                            {student.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
