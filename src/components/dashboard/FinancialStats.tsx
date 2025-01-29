@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   Legend,
   ReferenceLine,
+  Tooltip,
 } from "recharts";
 import { format, parse, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -172,7 +173,7 @@ export const FinancialStats = () => {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis tickFormatter={formatCurrency} />
-              <ChartTooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip />} />
               <Legend />
               <ReferenceLine y={0} stroke="#666" />
               <Bar
