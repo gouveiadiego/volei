@@ -19,8 +19,12 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const Index = () => {
+  const today = format(new Date(), 'yyyy-MM-dd');
+  
   // Fetch total number of students
   const { data: studentsCount = 0 } = useQuery({
     queryKey: ["students-count"],
@@ -44,13 +48,14 @@ const Index = () => {
     },
   });
 
-  // Fetch total attendance
-  const { data: totalAttendance = 0 } = useQuery({
-    queryKey: ["attendance-total"],
+  // Fetch today's attendance
+  const { data: todayAttendance = 0 } = useQuery({
+    queryKey: ["attendance-today"],
     queryFn: async () => {
       const { count } = await supabase
         .from("attendance")
         .select("*", { count: "exact", head: true })
+        .eq("class_date", today)
         .eq("present", true);
       return count;
     },
@@ -156,6 +161,8 @@ const Index = () => {
     }).format(value);
   };
 
+  const formattedDate = format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR });
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-primary">Dashboard</h1>
@@ -223,8 +230,9 @@ const Index = () => {
           <div className="flex items-center space-x-4">
             <Calendar className="w-8 h-8 text-primary" />
             <div>
-              <p className="text-sm text-gray-500">Presenças Registradas</p>
-              <p className="text-2xl font-bold">{totalAttendance}</p>
+              <p className="text-sm text-gray-500">Presenças Confirmadas</p>
+              <p className="text-xs text-gray-400 mt-1">{formattedDate}</p>
+              <p className="text-2xl font-bold">{todayAttendance}</p>
             </div>
           </div>
         </Card>
