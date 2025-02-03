@@ -7,6 +7,8 @@ import { Check, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Student {
   id: string;
@@ -26,8 +28,8 @@ const Frequencia = () => {
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
-  // Fetch students
   useEffect(() => {
     const fetchStudents = async () => {
       try {
@@ -140,11 +142,11 @@ const Frequencia = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <h1 className="text-3xl font-bold">Controle de Frequência</h1>
+    <div className="container mx-auto space-y-6">
+      <h1 className="text-2xl md:text-3xl font-bold">Controle de Frequência</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
+        <Card className="order-1 md:order-none">
           <CardHeader>
             <CardTitle>Calendário</CardTitle>
           </CardHeader>
@@ -153,7 +155,7 @@ const Frequencia = () => {
               mode="single"
               selected={date}
               onSelect={(newDate) => newDate && setDate(newDate)}
-              className="rounded-md border"
+              className="rounded-md border mx-auto"
             />
           </CardContent>
         </Card>
@@ -168,40 +170,43 @@ const Frequencia = () => {
                 <Loader2 className="h-6 w-6 animate-spin" />
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Aluno</TableHead>
-                    <TableHead>Presença</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {students.map((student) => (
-                    <TableRow key={student.id}>
-                      <TableCell>{student.name}</TableCell>
-                      <TableCell>
-                        {getAttendanceStatus(student.id) ? (
-                          <Check className="text-green-500" />
-                        ) : (
-                          <X className="text-red-500" />
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => toggleAttendance(student.id)}
-                        >
-                          {getAttendanceStatus(student.id)
-                            ? "Marcar Falta"
-                            : "Marcar Presença"}
-                        </Button>
-                      </TableCell>
+              <ScrollArea className="h-[400px] w-full">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Aluno</TableHead>
+                      <TableHead className="w-[100px]">Presença</TableHead>
+                      <TableHead className="w-[120px]">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {students.map((student) => (
+                      <TableRow key={student.id}>
+                        <TableCell className="font-medium">{student.name}</TableCell>
+                        <TableCell>
+                          {getAttendanceStatus(student.id) ? (
+                            <Check className="text-green-500" />
+                          ) : (
+                            <X className="text-red-500" />
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleAttendance(student.id)}
+                            className="w-full whitespace-nowrap"
+                          >
+                            {getAttendanceStatus(student.id)
+                              ? "Marcar Falta"
+                              : "Marcar Presença"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
             )}
           </CardContent>
         </Card>
