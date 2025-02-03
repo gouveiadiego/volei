@@ -1,7 +1,10 @@
 import { Card } from "@/components/ui/card";
-import { Users, CreditCard, Calendar, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, CreditCard, Calendar, TrendingUp, TrendingDown, DollarSign, LogOut } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 import {
   BarChart,
   Bar,
@@ -19,8 +22,24 @@ import { ptBR } from "date-fns/locale";
 import StudentStatusList from "@/components/dashboard/StudentStatusList";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const today = format(new Date(), 'yyyy-MM-dd');
   
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      navigate("/auth");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao sair",
+        description: error.message,
+      });
+    }
+  };
+
   // Fetch total number of students
   const { data: studentsCount = 0 } = useQuery({
     queryKey: ["students-count"],
@@ -161,7 +180,17 @@ const Index = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-primary">Dashboard</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-primary">Dashboard</h1>
+        <Button
+          variant="outline"
+          onClick={handleLogout}
+          className="gap-2"
+        >
+          <LogOut className="w-4 h-4" />
+          Sair
+        </Button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="p-6">
