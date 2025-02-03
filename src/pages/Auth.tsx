@@ -53,15 +53,22 @@ const Auth = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md p-6 space-y-6">
-        <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold text-primary">
-            {isLogin ? "Login" : "Criar Conta"}
-          </h1>
-          <p className="text-muted-foreground">
-            {isLogin
-              ? "Entre com suas credenciais"
-              : "Preencha os dados para criar sua conta"}
-          </p>
+        <div className="flex flex-col items-center space-y-4">
+          <img
+            src="/lovable-uploads/371d6a86-51cd-4204-9b89-2eaa0e47e956.png"
+            alt="Vôlei de Quarta Logo"
+            className="h-24 object-contain"
+          />
+          <div className="space-y-2 text-center">
+            <h1 className="text-3xl font-bold text-primary">
+              {isLogin ? "Login" : "Criar Conta"}
+            </h1>
+            <p className="text-muted-foreground">
+              {isLogin
+                ? "Entre com suas credenciais"
+                : "Preencha os dados para criar sua conta"}
+            </p>
+          </div>
         </div>
 
         <form onSubmit={handleAuth} className="space-y-4">
