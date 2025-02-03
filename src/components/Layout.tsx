@@ -9,7 +9,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <main className="flex-1 p-6">
           <div className="flex items-center justify-between mb-6">
             <SidebarTrigger />
-            <img src="/placeholder.svg" alt="Logo do Time" className="h-12" />
+            <img 
+              src="/lovable-uploads/1c044492-f4f2-404f-bff0-43cdbe9078fa.png" 
+              alt="Logo Vôlei de Quarta" 
+              className="h-12" 
+            />
           </div>
           {children}
         </main>
