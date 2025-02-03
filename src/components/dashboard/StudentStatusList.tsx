@@ -6,6 +6,7 @@ import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { Check, X } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Student {
   id: string;
@@ -23,6 +24,7 @@ interface Student {
 const StudentStatusList = () => {
   const today = format(new Date(), 'yyyy-MM-dd');
   const lastMonth = format(subDays(new Date(), 30), 'yyyy-MM-dd');
+  const isMobile = useIsMobile();
 
   const { data: students = [], isLoading } = useQuery({
     queryKey: ["students-status"],
@@ -109,6 +111,62 @@ const StudentStatusList = () => {
           <div className="flex items-center justify-center p-4">
             <p>Carregando...</p>
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Status dos Alunos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[400px]">
+            <div className="space-y-4">
+              {students.map((student) => {
+                const paymentStatus = getPaymentStatus(student);
+                const statusColor = getStatusColor(paymentStatus);
+                const attendanceRate = getAttendanceRate(student);
+                const lastAttendance = student.attendance
+                  .sort((a, b) => new Date(b.class_date).getTime() - new Date(a.class_date).getTime())[0];
+
+                return (
+                  <Card key={student.id} className="p-4">
+                    <h3 className="font-medium text-lg mb-2">{student.name}</h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-500">Status Pagamento:</span>
+                        <span className={statusColor}>{paymentStatus}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-500">Taxa de Presença:</span>
+                        <span>{attendanceRate}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-500">Última Aula:</span>
+                        <div className="flex items-center gap-2">
+                          {lastAttendance ? (
+                            <>
+                              {lastAttendance.present ? (
+                                <Check className="h-4 w-4 text-green-500" />
+                              ) : (
+                                <X className="h-4 w-4 text-red-500" />
+                              )}
+                              {format(new Date(lastAttendance.class_date), "dd/MM/yyyy", { locale: ptBR })}
+                            </>
+                          ) : (
+                            "Sem registro"
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </ScrollArea>
         </CardContent>
       </Card>
     );
