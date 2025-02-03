@@ -12,7 +12,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface Payment {
   id: string;
@@ -369,16 +369,16 @@ export default function Pagamentos() {
           <CardHeader>
             <CardTitle>Receitas Adicionais</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ScrollArea className="w-full">
-              <div className="rounded-md border">
+          <CardContent className="p-0">
+            <ScrollArea className="w-full rounded-md border">
+              <div className="relative min-w-full">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="min-w-[100px]">Data</TableHead>
-                      <TableHead className="min-w-[100px]">Valor</TableHead>
-                      <TableHead className="min-w-[200px]">Descrição</TableHead>
-                      <TableHead className="min-w-[150px]">Ações</TableHead>
+                      <TableHead className="w-[100px]">Data</TableHead>
+                      <TableHead className="w-[100px]">Valor</TableHead>
+                      <TableHead className="w-[200px]">Descrição</TableHead>
+                      <TableHead className="w-[150px]">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -424,6 +424,7 @@ export default function Pagamentos() {
                   </TableBody>
                 </Table>
               </div>
+              <ScrollBar orientation="horizontal" />
             </ScrollArea>
           </CardContent>
         </Card>
@@ -432,18 +433,18 @@ export default function Pagamentos() {
           <CardHeader>
             <CardTitle>Despesas da Quadra</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ScrollArea className="w-full">
-              <div className="rounded-md border">
+          <CardContent className="p-0">
+            <ScrollArea className="w-full rounded-md border">
+              <div className="relative min-w-full">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="min-w-[100px]">Mês/Ano</TableHead>
-                      <TableHead className="min-w-[100px]">Valor</TableHead>
-                      <TableHead className="min-w-[120px]">Data Pagamento</TableHead>
-                      <TableHead className="min-w-[200px]">Descrição</TableHead>
-                      <TableHead className="min-w-[100px]">Saldo Mês</TableHead>
-                      <TableHead className="min-w-[150px]">Ações</TableHead>
+                      <TableHead className="w-[100px]">Mês/Ano</TableHead>
+                      <TableHead className="w-[100px]">Valor</TableHead>
+                      <TableHead className="w-[120px]">Data Pagamento</TableHead>
+                      <TableHead className="w-[200px]">Descrição</TableHead>
+                      <TableHead className="w-[100px]">Saldo Mês</TableHead>
+                      <TableHead className="w-[150px]">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -495,6 +496,7 @@ export default function Pagamentos() {
                   </TableBody>
                 </Table>
               </div>
+              <ScrollBar orientation="horizontal" />
             </ScrollArea>
           </CardContent>
         </Card>
@@ -503,17 +505,17 @@ export default function Pagamentos() {
           <CardHeader>
             <CardTitle>Despesas Extras</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ScrollArea className="w-full">
-              <div className="rounded-md border">
+          <CardContent className="p-0">
+            <ScrollArea className="w-full rounded-md border">
+              <div className="relative min-w-full">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="min-w-[100px]">Data</TableHead>
-                      <TableHead className="min-w-[100px]">Valor</TableHead>
-                      <TableHead className="min-w-[120px]">Data Pagamento</TableHead>
-                      <TableHead className="min-w-[200px]">Descrição</TableHead>
-                      <TableHead className="min-w-[150px]">Ações</TableHead>
+                      <TableHead className="w-[100px]">Data</TableHead>
+                      <TableHead className="w-[100px]">Valor</TableHead>
+                      <TableHead className="w-[120px]">Data Pagamento</TableHead>
+                      <TableHead className="w-[200px]">Descrição</TableHead>
+                      <TableHead className="w-[150px]">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -562,6 +564,7 @@ export default function Pagamentos() {
                   </TableBody>
                 </Table>
               </div>
+              <ScrollBar orientation="horizontal" />
             </ScrollArea>
           </CardContent>
         </Card>
@@ -570,17 +573,17 @@ export default function Pagamentos() {
           <CardHeader>
             <CardTitle>Lista de Pagamentos</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ScrollArea className="w-full">
-              <div className="rounded-md border">
+          <CardContent className="p-0">
+            <ScrollArea className="w-full rounded-md border">
+              <div className="relative min-w-full">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="min-w-[200px]">Aluno</TableHead>
-                      <TableHead className="min-w-[100px]">Mês/Ano</TableHead>
-                      <TableHead className="min-w-[100px]">Valor</TableHead>
-                      <TableHead className="min-w-[100px]">Status</TableHead>
-                      <TableHead className="min-w-[120px]">Data Pagamento</TableHead>
+                      <TableHead className="w-[200px]">Aluno</TableHead>
+                      <TableHead className="w-[100px]">Mês/Ano</TableHead>
+                      <TableHead className="w-[100px]">Valor</TableHead>
+                      <TableHead className="w-[100px]">Status</TableHead>
+                      <TableHead className="w-[120px]">Data Pagamento</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -620,6 +623,7 @@ export default function Pagamentos() {
                   </TableBody>
                 </Table>
               </div>
+              <ScrollBar orientation="horizontal" />
             </ScrollArea>
           </CardContent>
         </Card>
