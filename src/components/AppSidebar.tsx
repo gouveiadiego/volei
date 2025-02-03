@@ -49,17 +49,20 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar>
+    <Sidebar className="z-50 bg-background border-r">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-foreground">Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton onClick={() => handleNavigation(item.path)}>
+                  <SidebarMenuButton 
+                    onClick={() => handleNavigation(item.path)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-foreground hover:bg-accent rounded-md transition-colors"
+                  >
                     <item.icon className="w-5 h-5" />
-                    <span>{item.title}</span>
+                    <span className="text-sm font-medium">{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
