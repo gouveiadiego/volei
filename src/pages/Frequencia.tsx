@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ptBR } from "date-fns/locale";
 
 interface Student {
   id: string;
@@ -53,7 +54,6 @@ const Frequencia = () => {
     fetchStudents();
   }, [toast]);
 
-  // Fetch attendance for selected date
   useEffect(() => {
     const fetchAttendance = async () => {
       setLoading(true);
@@ -89,7 +89,6 @@ const Frequencia = () => {
 
     try {
       if (existingRecord) {
-        // Update existing record
         const { error } = await supabase
           .from("attendance")
           .update({ present: !existingRecord.present })
@@ -103,7 +102,6 @@ const Frequencia = () => {
           )
         );
       } else {
-        // Create new record
         const { data, error } = await supabase
           .from("attendance")
           .insert({
@@ -142,75 +140,80 @@ const Frequencia = () => {
   };
 
   return (
-    <div className="container mx-auto space-y-6">
-      <h1 className="text-2xl md:text-3xl font-bold">Controle de Frequência</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="order-1 md:order-none">
-          <CardHeader>
-            <CardTitle>Calendário</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={(newDate) => newDate && setDate(newDate)}
-              className="rounded-md border mx-auto"
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Lista de Presença - {format(date, "dd/MM/yyyy")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center p-4">
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </div>
-            ) : (
-              <ScrollArea className="h-[400px] w-full">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Aluno</TableHead>
-                      <TableHead className="w-[100px]">Presença</TableHead>
-                      <TableHead className="w-[120px]">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {students.map((student) => (
-                      <TableRow key={student.id}>
-                        <TableCell className="font-medium">{student.name}</TableCell>
-                        <TableCell>
-                          {getAttendanceStatus(student.id) ? (
-                            <Check className="text-green-500" />
-                          ) : (
-                            <X className="text-red-500" />
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toggleAttendance(student.id)}
-                            className="w-full whitespace-nowrap"
-                          >
-                            {getAttendanceStatus(student.id)
-                              ? "Marcar Falta"
-                              : "Marcar Presença"}
-                          </Button>
-                        </TableCell>
+    <div className="container mx-auto py-4 px-2 md:px-4 space-y-4">
+      <Card className="border-0 shadow-none md:border md:shadow-sm">
+        <CardHeader className="px-2 md:px-6">
+          <CardTitle className="text-lg md:text-2xl">
+            Lista de Presença - {format(date, "dd/MM/yyyy")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-2 md:p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div className="order-2 md:order-1">
+              {loading ? (
+                <div className="flex items-center justify-center p-4">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              ) : (
+                <ScrollArea className="h-[400px] w-full rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Aluno</TableHead>
+                        <TableHead className="w-[80px] text-center">Presença</TableHead>
+                        <TableHead className="w-[100px]">Ações</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                    </TableHeader>
+                    <TableBody>
+                      {students.map((student) => (
+                        <TableRow key={student.id}>
+                          <TableCell className="font-medium">{student.name}</TableCell>
+                          <TableCell className="text-center">
+                            {getAttendanceStatus(student.id) ? (
+                              <Check className="inline text-green-500" />
+                            ) : (
+                              <X className="inline text-red-500" />
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => toggleAttendance(student.id)}
+                              className="w-full whitespace-nowrap text-xs"
+                            >
+                              {getAttendanceStatus(student.id)
+                                ? "Marcar Falta"
+                                : "Marcar Presença"}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              )}
+            </div>
+            
+            <div className="order-1 md:order-2">
+              <Card className="border shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-base md:text-lg">Calendário</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={(newDate) => newDate && setDate(newDate)}
+                    className="rounded-md mx-auto"
+                    locale={ptBR}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
