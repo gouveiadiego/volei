@@ -13,33 +13,75 @@ import Auth from "./pages/Auth";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
+import { useToast } from "./components/ui/use-toast";
 
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
+    // Check current session
+    const checkSession = async () => {
+      try {
+        console.log("Checking current session...");
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting session:", error);
+          throw error;
+        }
 
+        console.log("Current session:", currentSession);
+        setSession(currentSession);
+      } catch (error: any) {
+        console.error("Session check failed:", error);
+        toast({
+          variant: "destructive",
+          title: "Erro de autenticação",
+          description: "Por favor, faça login novamente.",
+        });
+        // Clear any existing session data
+        await supabase.auth.signOut();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkSession();
+
+    // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log("Auth state changed:", _event, session);
       setSession(session);
+      
+      if (_event === 'TOKEN_REFRESHED') {
+        console.log("Token refreshed successfully");
+      }
+      
+      if (_event === 'SIGNED_OUT') {
+        console.log("User signed out");
+        // Clear any cached data
+        queryClient.clear();
+      }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      console.log("Cleaning up auth subscription");
+      subscription.unsubscribe();
+    };
+  }, [toast]);
 
   if (loading) {
     return <div>Carregando...</div>;
   }
 
   if (!session) {
+    console.log("No session found, redirecting to auth");
     return <Navigate to="/auth" />;
   }
 
