@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -60,6 +61,8 @@ const StudentStatusList = () => {
   });
 
   const getPaymentStatus = (student: Student) => {
+    if (!student.payments || student.payments.length === 0) return "Sem pagamentos";
+    
     const latestPayment = student.payments
       .sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime())[0];
     
@@ -77,6 +80,15 @@ const StudentStatusList = () => {
     }
   };
 
+  const shouldHighlightRed = (student: Student) => {
+    if (!student.payments || student.payments.length === 0) return true;
+    
+    const latestPayment = student.payments
+      .sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime())[0];
+    
+    return !latestPayment || latestPayment.status === "overdue";
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Em dia":
@@ -86,7 +98,7 @@ const StudentStatusList = () => {
       case "Atrasado":
         return "text-red-600";
       default:
-        return "text-gray-600";
+        return "text-red-600"; // Sem pagamentos também será vermelho
     }
   };
 
@@ -131,10 +143,13 @@ const StudentStatusList = () => {
                 const attendanceRate = getAttendanceRate(student);
                 const lastAttendance = student.attendance
                   .sort((a, b) => new Date(b.class_date).getTime() - new Date(a.class_date).getTime())[0];
+                const isUnpaid = shouldHighlightRed(student);
 
                 return (
-                  <Card key={student.id} className="p-4">
-                    <h3 className="font-medium text-lg mb-2">{student.name}</h3>
+                  <Card key={student.id} className={`p-4 ${isUnpaid ? 'bg-red-50' : ''}`}>
+                    <h3 className={`font-medium text-lg mb-2 ${isUnpaid ? 'text-red-600' : ''}`}>
+                      {student.name}
+                    </h3>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between items-center">
                         <span className="text-gray-500">Status Pagamento:</span>
@@ -195,10 +210,13 @@ const StudentStatusList = () => {
                 const attendanceRate = getAttendanceRate(student);
                 const lastAttendance = student.attendance
                   .sort((a, b) => new Date(b.class_date).getTime() - new Date(a.class_date).getTime())[0];
+                const isUnpaid = shouldHighlightRed(student);
 
                 return (
-                  <TableRow key={student.id}>
-                    <TableCell className="font-medium">{student.name}</TableCell>
+                  <TableRow key={student.id} className={isUnpaid ? 'bg-red-50' : ''}>
+                    <TableCell className={`font-medium ${isUnpaid ? 'text-red-600' : ''}`}>
+                      {student.name}
+                    </TableCell>
                     <TableCell className={statusColor}>{paymentStatus}</TableCell>
                     <TableCell>{attendanceRate}</TableCell>
                     <TableCell>
