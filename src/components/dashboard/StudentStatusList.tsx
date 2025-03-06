@@ -1,7 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +20,10 @@ const StudentStatusList = () => {
   const today = format(new Date(), 'yyyy-MM-dd');
   const lastMonth = format(subDays(new Date(), 30), 'yyyy-MM-dd');
   const isMobile = useIsMobile();
+  
+  // Format current month in Portuguese
+  const currentMonth = format(new Date(), 'MMMM yyyy', { locale: ptBR });
+  const capitalizedMonth = currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1);
 
   const { data: students = [], isLoading } = useQuery({
     queryKey: ["students-status"],
@@ -153,6 +156,9 @@ const StudentStatusList = () => {
               );
             })}
           </div>
+          <div className="mt-4 text-center text-sm text-muted-foreground">
+            Pagamentos referentes a: <span className="font-medium">{capitalizedMonth}</span>
+          </div>
         </CardContent>
       </Card>
     );
@@ -186,6 +192,9 @@ const StudentStatusList = () => {
               </div>
             );
           })}
+        </div>
+        <div className="mt-6 text-center text-sm text-muted-foreground">
+          Pagamentos referentes a: <span className="font-medium">{capitalizedMonth}</span>
         </div>
       </CardContent>
     </Card>
