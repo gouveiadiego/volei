@@ -6,7 +6,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Student {
@@ -39,10 +38,6 @@ const StudentStatusList = () => {
           payments (
             status,
             due_date
-          ),
-          attendance (
-            present,
-            class_date
           )
         `)
         .eq('active', true)
@@ -102,17 +97,6 @@ const StudentStatusList = () => {
     }
   };
 
-  const getAttendanceRate = (student: Student) => {
-    const recentAttendance = student.attendance
-      .filter(a => new Date(a.class_date) >= new Date(lastMonth));
-    
-    if (recentAttendance.length === 0) return "Sem presenças";
-    
-    const presentCount = recentAttendance.filter(a => a.present).length;
-    const rate = (presentCount / recentAttendance.length) * 100;
-    return `${rate.toFixed(0)}%`;
-  };
-
   if (isLoading) {
     return (
       <Card>
@@ -140,9 +124,6 @@ const StudentStatusList = () => {
               {students.map((student) => {
                 const paymentStatus = getPaymentStatus(student);
                 const statusColor = getStatusColor(paymentStatus);
-                const attendanceRate = getAttendanceRate(student);
-                const lastAttendance = student.attendance
-                  .sort((a, b) => new Date(b.class_date).getTime() - new Date(a.class_date).getTime())[0];
                 const isUnpaid = shouldHighlightRed(student);
 
                 return (
@@ -154,27 +135,6 @@ const StudentStatusList = () => {
                       <div className="flex justify-between items-center">
                         <span className="text-gray-500">Status Pagamento:</span>
                         <span className={statusColor}>{paymentStatus}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-500">Taxa de Presença:</span>
-                        <span>{attendanceRate}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-500">Última Aula:</span>
-                        <div className="flex items-center gap-2">
-                          {lastAttendance ? (
-                            <>
-                              {lastAttendance.present ? (
-                                <Check className="h-4 w-4 text-green-500" />
-                              ) : (
-                                <X className="h-4 w-4 text-red-500" />
-                              )}
-                              {format(new Date(lastAttendance.class_date), "dd/MM/yyyy", { locale: ptBR })}
-                            </>
-                          ) : (
-                            "Sem registro"
-                          )}
-                        </div>
                       </div>
                     </div>
                   </Card>
@@ -199,17 +159,12 @@ const StudentStatusList = () => {
               <TableRow>
                 <TableHead>Aluno</TableHead>
                 <TableHead>Status Pagamento</TableHead>
-                <TableHead>Taxa de Presença</TableHead>
-                <TableHead>Última Aula</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {students.map((student) => {
                 const paymentStatus = getPaymentStatus(student);
                 const statusColor = getStatusColor(paymentStatus);
-                const attendanceRate = getAttendanceRate(student);
-                const lastAttendance = student.attendance
-                  .sort((a, b) => new Date(b.class_date).getTime() - new Date(a.class_date).getTime())[0];
                 const isUnpaid = shouldHighlightRed(student);
 
                 return (
@@ -218,21 +173,6 @@ const StudentStatusList = () => {
                       {student.name}
                     </TableCell>
                     <TableCell className={statusColor}>{paymentStatus}</TableCell>
-                    <TableCell>{attendanceRate}</TableCell>
-                    <TableCell>
-                      {lastAttendance ? (
-                        <div className="flex items-center gap-2">
-                          {lastAttendance.present ? (
-                            <Check className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <X className="h-4 w-4 text-red-500" />
-                          )}
-                          {format(new Date(lastAttendance.class_date), "dd/MM/yyyy", { locale: ptBR })}
-                        </div>
-                      ) : (
-                        "Sem registro"
-                      )}
-                    </TableCell>
                   </TableRow>
                 );
               })}

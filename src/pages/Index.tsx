@@ -1,6 +1,7 @@
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, CreditCard, Calendar, TrendingUp, TrendingDown, DollarSign, LogOut } from "lucide-react";
+import { Users, CreditCard, TrendingUp, TrendingDown, DollarSign, LogOut } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -24,7 +25,6 @@ import StudentStatusList from "@/components/dashboard/StudentStatusList";
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const today = format(new Date(), 'yyyy-MM-dd');
   
   const handleLogout = async () => {
     try {
@@ -60,19 +60,6 @@ const Index = () => {
         .select("amount")
         .eq("status", "paid");
       return data?.reduce((acc, curr) => acc + Number(curr.amount), 0) || 0;
-    },
-  });
-
-  // Fetch today's attendance
-  const { data: todayAttendance = 0 } = useQuery({
-    queryKey: ["attendance-today"],
-    queryFn: async () => {
-      const { count } = await supabase
-        .from("attendance")
-        .select("*", { count: "exact", head: true })
-        .eq("class_date", today)
-        .eq("present", true);
-      return count;
     },
   });
 
@@ -247,17 +234,6 @@ const Index = () => {
               <p className="text-2xl font-bold">
                 {formatCurrency(totalPayments)}
               </p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center space-x-4">
-            <Calendar className="w-8 h-8 text-primary" />
-            <div>
-              <p className="text-sm text-gray-500">Presenças Confirmadas</p>
-              <p className="text-xs text-gray-400 mt-1">{formattedDate}</p>
-              <p className="text-2xl font-bold">{todayAttendance}</p>
             </div>
           </div>
         </Card>
