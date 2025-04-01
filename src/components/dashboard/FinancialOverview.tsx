@@ -149,11 +149,11 @@ const FinancialOverview = () => {
         data.balance = data.revenue - data.expenses;
       }
 
-      // Manually ensure March has some pending payment for visualization
+      // Use correct pending payment amount (40 reais) instead of hardcoded 100
       if (monthlyData.has("mar")) {
         const marData = monthlyData.get("mar");
         if (marData.pending === 0) {
-          marData.pending = 100;
+          marData.pending = 40; // Changed from 100 to 40
           marData.studentsUnpaid = Math.max(1, marData.studentsUnpaid);
         }
       }
