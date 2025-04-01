@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { format, subDays, parse, isThisMonth } from "date-fns";
+import { format, subDays, parse, isThisMonth, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -22,11 +22,11 @@ const StudentStatusList = () => {
   const lastMonth = format(subDays(new Date(), 30), 'yyyy-MM-dd');
   const isMobile = useIsMobile();
   
-  // Define março as mês específico para verificar pagamentos (2025)
-  const marcoMonth = '2025-03-01';
-  const marcoMonthEnd = '2025-03-31';
+  // Use April 1st, 2025 instead of March 31st
+  const marcoMonth = '2025-04-01';
+  const marcoMonthEnd = '2025-04-30';
   
-  // Get current month range
+  // Get current month range - use the 1st day of month
   const now = new Date();
   const currentMonthStart = format(new Date(now.getFullYear(), now.getMonth(), 1), 'yyyy-MM-dd');
   const currentMonthEnd = format(new Date(now.getFullYear(), now.getMonth() + 1, 0), 'yyyy-MM-dd');
@@ -35,8 +35,8 @@ const StudentStatusList = () => {
   const currentMonth = format(now, 'MMMM yyyy', { locale: ptBR });
   const capitalizedMonth = currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1);
   
-  // Format março in Portuguese (2025)
-  const marcoMonthFormatted = format(parse('2025-03-01', 'yyyy-MM-dd', new Date()), 'MMMM yyyy', { locale: ptBR });
+  // Format April in Portuguese (2025) - changed from March to April
+  const marcoMonthFormatted = format(parseISO('2025-04-01'), 'MMMM yyyy', { locale: ptBR });
   const capitalizedMarcoMonth = marcoMonthFormatted.charAt(0).toUpperCase() + marcoMonthFormatted.slice(1);
 
   const { data: students = [], isLoading } = useQuery({
@@ -89,15 +89,15 @@ const StudentStatusList = () => {
   const getMarcoPaymentStatus = (student: Student) => {
     if (!student.payments || student.payments.length === 0) return "Sem pagamentos";
     
-    // Filtrar pagamentos de março 2025
+    // Filtrar pagamentos de abril 2025 (antes era março)
     const marcoPayments = student.payments.filter(payment => {
       const paymentDate = new Date(payment.due_date);
-      return paymentDate >= new Date(marcoMonth) && paymentDate <= new Date(marcoMonthEnd);
+      return paymentDate >= parseISO(marcoMonth) && paymentDate <= parseISO(marcoMonthEnd);
     });
     
     if (marcoPayments.length === 0) return "Sem pagamentos";
     
-    // Pegar o status do pagamento de março
+    // Pegar o status do pagamento de abril
     const marcoPayment = marcoPayments[0];
     
     switch (marcoPayment.status) {
@@ -149,13 +149,13 @@ const StudentStatusList = () => {
   const didNotPayInMarch = (student: Student) => {
     // Verificar especificamente se é o Daniel
     if (student.name.includes("Daniel")) {
-      // Para o Daniel, verificamos os pagamentos de março 2025
+      // Para o Daniel, verificamos os pagamentos de abril 2025 (antes era março)
       if (!student.payments || student.payments.length === 0) return true;
       
-      // Filtrar pagamentos de março 2025
+      // Filtrar pagamentos de abril 2025
       const marcoPayments = student.payments.filter(payment => {
         const paymentDate = new Date(payment.due_date);
-        return paymentDate >= new Date(marcoMonth) && paymentDate <= new Date(marcoMonthEnd);
+        return paymentDate >= parseISO(marcoMonth) && paymentDate <= parseISO(marcoMonthEnd);
       });
       
       if (marcoPayments.length === 0) return true;

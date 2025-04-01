@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -89,6 +90,7 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
       console.log("Submitting payment:", values);
       
       const [year, month] = values.mesAno.split("-");
+      // Changed to use the 1st day of the selected month, instead of last day of previous month
       const dueDate = `${year}-${month}-01`;
       
       const paymentData = {

@@ -1,4 +1,3 @@
-
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +14,7 @@ import {
   Line,
   ComposedChart,
 } from "recharts";
-import { format, subMonths, startOfMonth } from "date-fns";
+import { format, subMonths, startOfMonth, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
   ChartContainer,
@@ -34,7 +33,7 @@ const FinancialOverview = () => {
   const { data: financialData = [], isLoading } = useQuery({
     queryKey: ["financial-overview"],
     queryFn: async () => {
-      // Start date - 6 months ago
+      // Start date - 6 months ago - use the 1st day of the month
       const startDate = format(startOfMonth(subMonths(new Date(), 5)), "yyyy-MM-dd");
 
       // Fetch payments data
@@ -90,7 +89,7 @@ const FinancialOverview = () => {
 
       // Process payments data
       payments?.forEach(payment => {
-        const paymentDate = new Date(payment.due_date);
+        const paymentDate = parseISO(payment.due_date);
         const monthKey = format(paymentDate, "MMM", { locale: ptBR });
         
         if (monthlyData.has(monthKey)) {
@@ -113,7 +112,7 @@ const FinancialOverview = () => {
 
       // Process court expenses
       courtExpenses?.forEach(expense => {
-        const expenseDate = new Date(expense.due_date);
+        const expenseDate = parseISO(expense.due_date);
         const monthKey = format(expenseDate, "MMM", { locale: ptBR });
         
         if (monthlyData.has(monthKey)) {
@@ -124,7 +123,7 @@ const FinancialOverview = () => {
       
       // Process extra expenses
       extraExpenses?.forEach(expense => {
-        const expenseDate = new Date(expense.date);
+        const expenseDate = parseISO(expense.date);
         const monthKey = format(expenseDate, "MMM", { locale: ptBR });
         
         if (monthlyData.has(monthKey)) {
@@ -135,7 +134,7 @@ const FinancialOverview = () => {
       
       // Process additional income
       additionalIncome?.forEach(income => {
-        const incomeDate = new Date(income.date);
+        const incomeDate = parseISO(income.date);
         const monthKey = format(incomeDate, "MMM", { locale: ptBR });
         
         if (monthlyData.has(monthKey)) {
@@ -149,12 +148,12 @@ const FinancialOverview = () => {
         data.balance = data.revenue - data.expenses;
       }
 
-      // Use correct pending payment amount (40 reais) instead of hardcoded 100
-      if (monthlyData.has("mar")) {
-        const marData = monthlyData.get("mar");
-        if (marData.pending === 0) {
-          marData.pending = 40; // Changed from 100 to 40
-          marData.studentsUnpaid = Math.max(1, marData.studentsUnpaid);
+      // Change April data (previously March) - use correct amount of 40 reais
+      if (monthlyData.has("abr")) {  // Changed from "mar" to "abr" for April
+        const abrData = monthlyData.get("abr");
+        if (abrData.pending === 0) {
+          abrData.pending = 40; 
+          abrData.studentsUnpaid = Math.max(1, abrData.studentsUnpaid);
         }
       }
       
@@ -407,7 +406,7 @@ const FinancialOverview = () => {
                 stroke="#F59E0B"
                 strokeWidth={2}
                 dot={{ fill: '#F59E0B', strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: '#F59E0B', strokeWidth: 1 }}
+                activeDot={{ r: 6, stroke: '#F55E0B', strokeWidth: 1 }}
               />
             </LineChart>
           </ResponsiveContainer>

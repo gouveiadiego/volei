@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { CadastroCourtExpense } from "@/components/CadastroCourtExpense";
 import { CadastroAdditionalIncome } from "@/components/CadastroAdditionalIncome";
 import { CadastroExpense } from "@/components/CadastroExpense";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -291,7 +292,8 @@ export default function Pagamentos() {
   };
 
   const formatDate = (date: string) => {
-    return format(new Date(date), "dd/MM/yyyy", { locale: ptBR });
+    // Format date consistently as dd/MM/yyyy
+    return format(parseISO(date), "dd/MM/yyyy", { locale: ptBR });
   };
 
   const formatCurrency = (value: number) => {
