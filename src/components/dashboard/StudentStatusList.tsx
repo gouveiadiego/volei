@@ -1,6 +1,7 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { format, subDays, parse } from "date-fns";
+import { format, subDays, parse, isThisMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -21,17 +22,22 @@ const StudentStatusList = () => {
   const lastMonth = format(subDays(new Date(), 30), 'yyyy-MM-dd');
   const isMobile = useIsMobile();
   
-  // Define março as mês específico para verificar pagamentos (atualizado para 2025)
-  const targetMonth = '2025-03-01';
-  const targetMonthEnd = '2025-03-31';
+  // Define março as mês específico para verificar pagamentos (2025)
+  const marcoMonth = '2025-03-01';
+  const marcoMonthEnd = '2025-03-31';
+  
+  // Get current month range
+  const now = new Date();
+  const currentMonthStart = format(new Date(now.getFullYear(), now.getMonth(), 1), 'yyyy-MM-dd');
+  const currentMonthEnd = format(new Date(now.getFullYear(), now.getMonth() + 1, 0), 'yyyy-MM-dd');
   
   // Format current month in Portuguese
-  const currentMonth = format(new Date(), 'MMMM yyyy', { locale: ptBR });
+  const currentMonth = format(now, 'MMMM yyyy', { locale: ptBR });
   const capitalizedMonth = currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1);
   
-  // Format março in Portuguese (atualizado para 2025)
-  const marcoMonth = format(parse('2025-03-01', 'yyyy-MM-dd', new Date()), 'MMMM yyyy', { locale: ptBR });
-  const capitalizedMarcoMonth = marcoMonth.charAt(0).toUpperCase() + marcoMonth.slice(1);
+  // Format março in Portuguese (2025)
+  const marcoMonthFormatted = format(parse('2025-03-01', 'yyyy-MM-dd', new Date()), 'MMMM yyyy', { locale: ptBR });
+  const capitalizedMarcoMonth = marcoMonthFormatted.charAt(0).toUpperCase() + marcoMonthFormatted.slice(1);
 
   const { data: students = [], isLoading } = useQuery({
     queryKey: ["students-status"],
@@ -86,7 +92,7 @@ const StudentStatusList = () => {
     // Filtrar pagamentos de março 2025
     const marcoPayments = student.payments.filter(payment => {
       const paymentDate = new Date(payment.due_date);
-      return paymentDate >= new Date(targetMonth) && paymentDate <= new Date(targetMonthEnd);
+      return paymentDate >= new Date(marcoMonth) && paymentDate <= new Date(marcoMonthEnd);
     });
     
     if (marcoPayments.length === 0) return "Sem pagamentos";
@@ -103,6 +109,31 @@ const StudentStatusList = () => {
         return "Não Pago";
       default:
         return "Sem informação";
+    }
+  };
+
+  const getCurrentMonthPaymentStatus = (student: Student) => {
+    if (!student.payments || student.payments.length === 0) return "Não Pago";
+    
+    // Filtrar pagamentos do mês atual
+    const currentMonthPayments = student.payments.filter(payment => {
+      const paymentDate = new Date(payment.due_date);
+      return paymentDate >= new Date(currentMonthStart) && paymentDate <= new Date(currentMonthEnd);
+    });
+    
+    if (currentMonthPayments.length === 0) return "Não Pago";
+    
+    // Pegar o status do pagamento do mês atual
+    const currentPayment = currentMonthPayments[0];
+    
+    switch (currentPayment.status) {
+      case "paid":
+        return "Pago";
+      case "pending":
+        return "Pendente";
+      case "overdue":
+      default:
+        return "Não Pago";
     }
   };
 
@@ -124,7 +155,7 @@ const StudentStatusList = () => {
       // Filtrar pagamentos de março 2025
       const marcoPayments = student.payments.filter(payment => {
         const paymentDate = new Date(payment.due_date);
-        return paymentDate >= new Date(targetMonth) && paymentDate <= new Date(targetMonthEnd);
+        return paymentDate >= new Date(marcoMonth) && paymentDate <= new Date(marcoMonthEnd);
       });
       
       if (marcoPayments.length === 0) return true;
@@ -134,6 +165,10 @@ const StudentStatusList = () => {
     
     // Para os outros alunos, consideramos que pagaram
     return false;
+  };
+
+  const didNotPayCurrentMonth = (student: Student) => {
+    return getCurrentMonthPaymentStatus(student) === "Não Pago";
   };
 
   const getStatusColor = (status: string) => {
@@ -165,9 +200,16 @@ const StudentStatusList = () => {
     }
   };
 
-  // Contar alunos que não pagaram em março (que agora deve ser apenas o Daniel)
+  // Contar alunos que não pagaram em março (somente o Daniel)
   const unpaidMarchCount = students.filter(student => didNotPayInMarch(student)).length;
-  const unpaidStudentName = students.find(student => didNotPayInMarch(student))?.name || "";
+  const unpaidMarchName = students.find(student => didNotPayInMarch(student))?.name || "";
+  
+  // Contar alunos que não pagaram no mês atual
+  const unpaidCurrentMonthCount = students.filter(student => didNotPayCurrentMonth(student)).length;
+  const unpaidCurrentMonthNames = students
+    .filter(student => didNotPayCurrentMonth(student))
+    .map(student => student.name)
+    .join(", ");
 
   if (isLoading) {
     return (
@@ -193,10 +235,19 @@ const StudentStatusList = () => {
         </CardHeader>
         <CardContent className="p-4">
           {unpaidMarchCount > 0 && (
-            <Alert variant="destructive" className="mb-4 bg-red-50 border-red-200">
+            <Alert variant="destructive" className="mb-2 bg-red-50 border-red-200">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                <strong>{unpaidStudentName}</strong> não pagou em {capitalizedMarcoMonth}
+                <strong>{unpaidMarchName}</strong> não pagou em {capitalizedMarcoMonth}
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          {unpaidCurrentMonthCount > 0 && (
+            <Alert variant="destructive" className="mb-4 bg-amber-50 border-amber-200">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Atenção:</strong> {unpaidCurrentMonthCount} alunos ainda não pagaram em {capitalizedMonth}
               </AlertDescription>
             </Alert>
           )}
@@ -205,41 +256,57 @@ const StudentStatusList = () => {
             {students.map((student) => {
               const paymentStatus = getPaymentStatus(student);
               const marcoStatus = getMarcoPaymentStatus(student);
+              const currentMonthStatus = getCurrentMonthPaymentStatus(student);
               const statusColor = getStatusColor(paymentStatus);
               const statusIcon = getStatusIcon(paymentStatus);
               const isUnpaid = shouldHighlightRed(student);
               const unpaidInMarch = didNotPayInMarch(student);
+              const unpaidCurrentMonth = didNotPayCurrentMonth(student);
+              
+              // Determine card background based on payment status
+              let cardBg = "bg-white/70 hover:bg-white/90";
+              if (unpaidInMarch) {
+                cardBg = "bg-red-50 border-red-200";
+              } else if (unpaidCurrentMonth) {
+                cardBg = "bg-amber-50 border-amber-200";
+              }
 
               return (
                 <div 
                   key={student.id} 
-                  className={`rounded-lg border p-3 transition-all duration-300 hover:shadow-md ${
-                    unpaidInMarch ? 'bg-red-50 border-red-200' : isUnpaid ? 'bg-amber-50 border-amber-200' : 'bg-white/70 hover:bg-white/90'
-                  }`}
+                  className={`rounded-lg border p-3 transition-all duration-300 hover:shadow-md ${cardBg}`}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <h3 className={`font-medium ${
-                      unpaidInMarch ? 'text-red-600' : isUnpaid ? 'text-amber-600' : 'text-slate-800'
+                      unpaidInMarch ? 'text-red-600' : unpaidCurrentMonth ? 'text-amber-600' : 'text-slate-800'
                     }`}>
                       {student.name}
                     </h3>
                     <div className="flex items-center gap-1.5">
-                      {statusIcon}
-                      <span className={`text-sm font-medium ${statusColor}`}>{paymentStatus}</span>
+                      {getStatusIcon(currentMonthStatus)}
+                      <span className={`text-sm font-medium ${getStatusColor(currentMonthStatus)}`}>
+                        {currentMonthStatus}
+                      </span>
                     </div>
                   </div>
-                  {unpaidInMarch && (
-                    <div className="text-xs flex items-center mt-1 text-red-600">
-                      <AlertTriangle className="h-3 w-3 mr-1" />
-                      <span>Março 2025: Não pago</span>
+                  
+                  <div className="flex flex-col gap-1 mt-2 text-xs">
+                    {unpaidInMarch && (
+                      <div className="flex items-center text-red-600">
+                        <AlertTriangle className="h-3 w-3 mr-1" />
+                        <span>{capitalizedMarcoMonth}: Não pago</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center">
+                      <span className={`${getStatusColor(currentMonthStatus)}`}>
+                        {capitalizedMonth}: {currentMonthStatus}
+                      </span>
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}
-          </div>
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            Pagamentos referentes a: <span className="font-medium">{capitalizedMonth}</span>
           </div>
         </CardContent>
       </Card>
@@ -253,10 +320,19 @@ const StudentStatusList = () => {
       </CardHeader>
       <CardContent className="p-6">
         {unpaidMarchCount > 0 && (
-          <Alert variant="destructive" className="mb-6 bg-red-50 border-red-200">
+          <Alert variant="destructive" className="mb-3 bg-red-50 border-red-200">
             <AlertTriangle className="h-5 w-5" />
             <AlertDescription className="text-sm">
-              <strong>{unpaidStudentName}</strong> não pagou em {capitalizedMarcoMonth}
+              <strong>{unpaidMarchName}</strong> não pagou em {capitalizedMarcoMonth}
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {unpaidCurrentMonthCount > 0 && (
+          <Alert variant="destructive" className="mb-6 bg-amber-50 border-amber-200">
+            <AlertTriangle className="h-5 w-5" />
+            <AlertDescription className="text-sm">
+              <strong>Atenção:</strong> {unpaidCurrentMonthCount} alunos ainda não pagaram em {capitalizedMonth}
             </AlertDescription>
           </Alert>
         )}
@@ -265,41 +341,57 @@ const StudentStatusList = () => {
           {students.map((student) => {
             const paymentStatus = getPaymentStatus(student);
             const marcoStatus = getMarcoPaymentStatus(student);
+            const currentMonthStatus = getCurrentMonthPaymentStatus(student);
             const statusColor = getStatusColor(paymentStatus);
             const statusIcon = getStatusIcon(paymentStatus);
             const isUnpaid = shouldHighlightRed(student);
             const unpaidInMarch = didNotPayInMarch(student);
+            const unpaidCurrentMonth = didNotPayCurrentMonth(student);
+            
+            // Determine card background based on payment status
+            let cardBg = "bg-white/70 hover:bg-white/90";
+            if (unpaidInMarch) {
+              cardBg = "bg-red-50 border-red-200";
+            } else if (unpaidCurrentMonth) {
+              cardBg = "bg-amber-50 border-amber-200";
+            }
 
             return (
               <div 
                 key={student.id} 
-                className={`rounded-lg border p-4 transition-all duration-300 hover:shadow-md ${
-                  unpaidInMarch ? 'bg-red-50 border-red-200' : isUnpaid ? 'bg-amber-50 border-amber-200' : 'bg-white/70 hover:bg-white/90'
-                }`}
+                className={`rounded-lg border p-4 transition-all duration-300 hover:shadow-md ${cardBg}`}
               >
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-2">
                   <h3 className={`font-medium ${
-                    unpaidInMarch ? 'text-red-600' : isUnpaid ? 'text-amber-600' : 'text-slate-800'
+                    unpaidInMarch ? 'text-red-600' : unpaidCurrentMonth ? 'text-amber-600' : 'text-slate-800'
                   }`}>
                     {student.name}
                   </h3>
                   <div className="flex items-center gap-2">
-                    {statusIcon}
-                    <span className={`text-sm font-medium ${statusColor}`}>{paymentStatus}</span>
+                    {getStatusIcon(currentMonthStatus)}
+                    <span className={`text-sm font-medium ${getStatusColor(currentMonthStatus)}`}>
+                      {currentMonthStatus}
+                    </span>
                   </div>
                 </div>
-                {unpaidInMarch && (
-                  <div className="text-xs flex items-center mt-2 text-red-600">
-                    <AlertTriangle className="h-3 w-3 mr-1" />
-                    <span>Março 2025: Não pago</span>
+                
+                <div className="flex flex-col gap-1 mt-2 text-sm">
+                  {unpaidInMarch && (
+                    <div className="flex items-center text-red-600">
+                      <AlertTriangle className="h-3 w-3 mr-1" />
+                      <span>{capitalizedMarcoMonth}: Não pago</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center">
+                    <span className={`${getStatusColor(currentMonthStatus)}`}>
+                      {capitalizedMonth}: {currentMonthStatus}
+                    </span>
                   </div>
-                )}
+                </div>
               </div>
             );
           })}
-        </div>
-        <div className="mt-6 text-center text-sm text-muted-foreground">
-          Pagamentos referentes a: <span className="font-medium">{capitalizedMonth}</span>
         </div>
       </CardContent>
     </Card>
