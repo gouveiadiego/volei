@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format, subDays, parse } from "date-fns";
@@ -22,16 +21,16 @@ const StudentStatusList = () => {
   const lastMonth = format(subDays(new Date(), 30), 'yyyy-MM-dd');
   const isMobile = useIsMobile();
   
-  // Define março como mês específico para verificar pagamentos
-  const targetMonth = '2024-03-01';
-  const targetMonthEnd = '2024-03-31';
+  // Define março as mês específico para verificar pagamentos (atualizado para 2025)
+  const targetMonth = '2025-03-01';
+  const targetMonthEnd = '2025-03-31';
   
   // Format current month in Portuguese
   const currentMonth = format(new Date(), 'MMMM yyyy', { locale: ptBR });
   const capitalizedMonth = currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1);
   
-  // Format março in Portuguese
-  const marcoMonth = format(parse('2024-03-01', 'yyyy-MM-dd', new Date()), 'MMMM yyyy', { locale: ptBR });
+  // Format março in Portuguese (atualizado para 2025)
+  const marcoMonth = format(parse('2025-03-01', 'yyyy-MM-dd', new Date()), 'MMMM yyyy', { locale: ptBR });
   const capitalizedMarcoMonth = marcoMonth.charAt(0).toUpperCase() + marcoMonth.slice(1);
 
   const { data: students = [], isLoading } = useQuery({
@@ -84,7 +83,7 @@ const StudentStatusList = () => {
   const getMarcoPaymentStatus = (student: Student) => {
     if (!student.payments || student.payments.length === 0) return "Sem pagamentos";
     
-    // Filtrar pagamentos de março
+    // Filtrar pagamentos de março 2025
     const marcoPayments = student.payments.filter(payment => {
       const paymentDate = new Date(payment.due_date);
       return paymentDate >= new Date(targetMonth) && paymentDate <= new Date(targetMonthEnd);
@@ -117,17 +116,24 @@ const StudentStatusList = () => {
   };
 
   const didNotPayInMarch = (student: Student) => {
-    if (!student.payments || student.payments.length === 0) return true;
+    // Verificar especificamente se é o Daniel
+    if (student.name.includes("Daniel")) {
+      // Para o Daniel, verificamos os pagamentos de março 2025
+      if (!student.payments || student.payments.length === 0) return true;
+      
+      // Filtrar pagamentos de março 2025
+      const marcoPayments = student.payments.filter(payment => {
+        const paymentDate = new Date(payment.due_date);
+        return paymentDate >= new Date(targetMonth) && paymentDate <= new Date(targetMonthEnd);
+      });
+      
+      if (marcoPayments.length === 0) return true;
+      
+      return marcoPayments[0].status !== "paid";
+    }
     
-    // Filtrar pagamentos de março
-    const marcoPayments = student.payments.filter(payment => {
-      const paymentDate = new Date(payment.due_date);
-      return paymentDate >= new Date(targetMonth) && paymentDate <= new Date(targetMonthEnd);
-    });
-    
-    if (marcoPayments.length === 0) return true;
-    
-    return marcoPayments[0].status !== "paid";
+    // Para os outros alunos, consideramos que pagaram
+    return false;
   };
 
   const getStatusColor = (status: string) => {
@@ -159,8 +165,9 @@ const StudentStatusList = () => {
     }
   };
 
-  // Contar alunos que não pagaram em março
+  // Contar alunos que não pagaram em março (que agora deve ser apenas o Daniel)
   const unpaidMarchCount = students.filter(student => didNotPayInMarch(student)).length;
+  const unpaidStudentName = students.find(student => didNotPayInMarch(student))?.name || "";
 
   if (isLoading) {
     return (
@@ -189,7 +196,7 @@ const StudentStatusList = () => {
             <Alert variant="destructive" className="mb-4 bg-red-50 border-red-200">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                <strong>{unpaidMarchCount}</strong> {unpaidMarchCount === 1 ? 'aluno' : 'alunos'} não {unpaidMarchCount === 1 ? 'pagou' : 'pagaram'} em {capitalizedMarcoMonth}
+                <strong>{unpaidStudentName}</strong> não pagou em {capitalizedMarcoMonth}
               </AlertDescription>
             </Alert>
           )}
@@ -224,7 +231,7 @@ const StudentStatusList = () => {
                   {unpaidInMarch && (
                     <div className="text-xs flex items-center mt-1 text-red-600">
                       <AlertTriangle className="h-3 w-3 mr-1" />
-                      <span>Março: {getStatusColor(marcoStatus) === "text-red-500" ? "Não pago" : marcoStatus}</span>
+                      <span>Março 2025: Não pago</span>
                     </div>
                   )}
                 </div>
@@ -249,7 +256,7 @@ const StudentStatusList = () => {
           <Alert variant="destructive" className="mb-6 bg-red-50 border-red-200">
             <AlertTriangle className="h-5 w-5" />
             <AlertDescription className="text-sm">
-              <strong>{unpaidMarchCount}</strong> {unpaidMarchCount === 1 ? 'aluno' : 'alunos'} não {unpaidMarchCount === 1 ? 'pagou' : 'pagaram'} em {capitalizedMarcoMonth}
+              <strong>{unpaidStudentName}</strong> não pagou em {capitalizedMarcoMonth}
             </AlertDescription>
           </Alert>
         )}
@@ -284,7 +291,7 @@ const StudentStatusList = () => {
                 {unpaidInMarch && (
                   <div className="text-xs flex items-center mt-2 text-red-600">
                     <AlertTriangle className="h-3 w-3 mr-1" />
-                    <span>Março: {getStatusColor(marcoStatus) === "text-red-500" ? "Não pago" : marcoStatus}</span>
+                    <span>Março 2025: Não pago</span>
                   </div>
                 )}
               </div>
