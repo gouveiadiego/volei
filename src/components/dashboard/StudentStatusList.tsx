@@ -1,11 +1,12 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { format, subDays } from "date-fns";
+import { format, subDays, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { BadgeCheck, BadgeAlert, CircleDot } from "lucide-react";
+import { BadgeCheck, BadgeAlert, CircleDot, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Student {
   id: string;
@@ -21,9 +22,17 @@ const StudentStatusList = () => {
   const lastMonth = format(subDays(new Date(), 30), 'yyyy-MM-dd');
   const isMobile = useIsMobile();
   
+  // Define março como mês específico para verificar pagamentos
+  const targetMonth = '2024-03-01';
+  const targetMonthEnd = '2024-03-31';
+  
   // Format current month in Portuguese
   const currentMonth = format(new Date(), 'MMMM yyyy', { locale: ptBR });
   const capitalizedMonth = currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1);
+  
+  // Format março in Portuguese
+  const marcoMonth = format(parse('2024-03-01', 'yyyy-MM-dd', new Date()), 'MMMM yyyy', { locale: ptBR });
+  const capitalizedMarcoMonth = marcoMonth.charAt(0).toUpperCase() + marcoMonth.slice(1);
 
   const { data: students = [], isLoading } = useQuery({
     queryKey: ["students-status"],
@@ -40,8 +49,6 @@ const StudentStatusList = () => {
           )
         `)
         .eq('active', true)
-        .gte('payments.due_date', lastMonth)
-        .lte('payments.due_date', today)
         .order('name');
 
       if (studentsError) {
@@ -74,6 +81,32 @@ const StudentStatusList = () => {
     }
   };
 
+  const getMarcoPaymentStatus = (student: Student) => {
+    if (!student.payments || student.payments.length === 0) return "Sem pagamentos";
+    
+    // Filtrar pagamentos de março
+    const marcoPayments = student.payments.filter(payment => {
+      const paymentDate = new Date(payment.due_date);
+      return paymentDate >= new Date(targetMonth) && paymentDate <= new Date(targetMonthEnd);
+    });
+    
+    if (marcoPayments.length === 0) return "Sem pagamentos";
+    
+    // Pegar o status do pagamento de março
+    const marcoPayment = marcoPayments[0];
+    
+    switch (marcoPayment.status) {
+      case "paid":
+        return "Pago";
+      case "pending":
+        return "Pendente";
+      case "overdue":
+        return "Não Pago";
+      default:
+        return "Sem informação";
+    }
+  };
+
   const shouldHighlightRed = (student: Student) => {
     if (!student.payments || student.payments.length === 0) return true;
     
@@ -83,13 +116,29 @@ const StudentStatusList = () => {
     return !latestPayment || latestPayment.status === "overdue";
   };
 
+  const didNotPayInMarch = (student: Student) => {
+    if (!student.payments || student.payments.length === 0) return true;
+    
+    // Filtrar pagamentos de março
+    const marcoPayments = student.payments.filter(payment => {
+      const paymentDate = new Date(payment.due_date);
+      return paymentDate >= new Date(targetMonth) && paymentDate <= new Date(targetMonthEnd);
+    });
+    
+    if (marcoPayments.length === 0) return true;
+    
+    return marcoPayments[0].status !== "paid";
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Em dia":
+      case "Pago":
         return "text-green-500";
       case "Pendente":
         return "text-amber-500";
       case "Atrasado":
+      case "Não Pago":
         return "text-red-500";
       default:
         return "text-red-500";
@@ -99,14 +148,19 @@ const StudentStatusList = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "Em dia":
+      case "Pago":
         return <BadgeCheck className="h-5 w-5 text-green-500" />;
       case "Pendente":
         return <CircleDot className="h-5 w-5 text-amber-500" />;
       case "Atrasado":
+      case "Não Pago":
       default:
         return <BadgeAlert className="h-5 w-5 text-red-500" />;
     }
   };
+
+  // Contar alunos que não pagaram em março
+  const unpaidMarchCount = students.filter(student => didNotPayInMarch(student)).length;
 
   if (isLoading) {
     return (
@@ -131,20 +185,35 @@ const StudentStatusList = () => {
           <CardTitle className="text-center text-xl">Status dos Alunos</CardTitle>
         </CardHeader>
         <CardContent className="p-4">
+          {unpaidMarchCount > 0 && (
+            <Alert variant="destructive" className="mb-4 bg-red-50 border-red-200">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>{unpaidMarchCount}</strong> {unpaidMarchCount === 1 ? 'aluno' : 'alunos'} não {unpaidMarchCount === 1 ? 'pagou' : 'pagaram'} em {capitalizedMarcoMonth}
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <div className="grid grid-cols-1 gap-3">
             {students.map((student) => {
               const paymentStatus = getPaymentStatus(student);
+              const marcoStatus = getMarcoPaymentStatus(student);
               const statusColor = getStatusColor(paymentStatus);
               const statusIcon = getStatusIcon(paymentStatus);
               const isUnpaid = shouldHighlightRed(student);
+              const unpaidInMarch = didNotPayInMarch(student);
 
               return (
                 <div 
                   key={student.id} 
-                  className={`rounded-lg border p-3 transition-all duration-300 hover:shadow-md ${isUnpaid ? 'bg-red-50 border-red-200' : 'bg-white/70 hover:bg-white/90'}`}
+                  className={`rounded-lg border p-3 transition-all duration-300 hover:shadow-md ${
+                    unpaidInMarch ? 'bg-red-50 border-red-200' : isUnpaid ? 'bg-amber-50 border-amber-200' : 'bg-white/70 hover:bg-white/90'
+                  }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <h3 className={`font-medium ${isUnpaid ? 'text-red-600' : 'text-slate-800'}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className={`font-medium ${
+                      unpaidInMarch ? 'text-red-600' : isUnpaid ? 'text-amber-600' : 'text-slate-800'
+                    }`}>
                       {student.name}
                     </h3>
                     <div className="flex items-center gap-1.5">
@@ -152,6 +221,12 @@ const StudentStatusList = () => {
                       <span className={`text-sm font-medium ${statusColor}`}>{paymentStatus}</span>
                     </div>
                   </div>
+                  {unpaidInMarch && (
+                    <div className="text-xs flex items-center mt-1 text-red-600">
+                      <AlertTriangle className="h-3 w-3 mr-1" />
+                      <span>Março: {getStatusColor(marcoStatus) === "text-red-500" ? "Não pago" : marcoStatus}</span>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -170,25 +245,48 @@ const StudentStatusList = () => {
         <CardTitle className="text-center text-xl">Status dos Alunos</CardTitle>
       </CardHeader>
       <CardContent className="p-6">
+        {unpaidMarchCount > 0 && (
+          <Alert variant="destructive" className="mb-6 bg-red-50 border-red-200">
+            <AlertTriangle className="h-5 w-5" />
+            <AlertDescription className="text-sm">
+              <strong>{unpaidMarchCount}</strong> {unpaidMarchCount === 1 ? 'aluno' : 'alunos'} não {unpaidMarchCount === 1 ? 'pagou' : 'pagaram'} em {capitalizedMarcoMonth}
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {students.map((student) => {
             const paymentStatus = getPaymentStatus(student);
+            const marcoStatus = getMarcoPaymentStatus(student);
             const statusColor = getStatusColor(paymentStatus);
             const statusIcon = getStatusIcon(paymentStatus);
             const isUnpaid = shouldHighlightRed(student);
+            const unpaidInMarch = didNotPayInMarch(student);
 
             return (
               <div 
                 key={student.id} 
-                className={`flex items-center justify-between rounded-lg border p-4 transition-all duration-300 hover:shadow-md ${isUnpaid ? 'bg-red-50 border-red-200' : 'bg-white/70 hover:bg-white/90'}`}
+                className={`rounded-lg border p-4 transition-all duration-300 hover:shadow-md ${
+                  unpaidInMarch ? 'bg-red-50 border-red-200' : isUnpaid ? 'bg-amber-50 border-amber-200' : 'bg-white/70 hover:bg-white/90'
+                }`}
               >
-                <h3 className={`font-medium ${isUnpaid ? 'text-red-600' : 'text-slate-800'}`}>
-                  {student.name}
-                </h3>
-                <div className="flex items-center gap-2">
-                  {statusIcon}
-                  <span className={`text-sm font-medium ${statusColor}`}>{paymentStatus}</span>
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className={`font-medium ${
+                    unpaidInMarch ? 'text-red-600' : isUnpaid ? 'text-amber-600' : 'text-slate-800'
+                  }`}>
+                    {student.name}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    {statusIcon}
+                    <span className={`text-sm font-medium ${statusColor}`}>{paymentStatus}</span>
+                  </div>
                 </div>
+                {unpaidInMarch && (
+                  <div className="text-xs flex items-center mt-2 text-red-600">
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    <span>Março: {getStatusColor(marcoStatus) === "text-red-500" ? "Não pago" : marcoStatus}</span>
+                  </div>
+                )}
               </div>
             );
           })}
