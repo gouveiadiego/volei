@@ -6,21 +6,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import StudentStatusList from "@/components/dashboard/StudentStatusList";
+import FinancialOverview from "@/components/dashboard/FinancialOverview";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -95,83 +84,6 @@ const Index = () => {
   // Calculate total balance
   const totalBalance = (totalPayments + totalAdditionalIncome) - totalExpenses;
 
-  // Fetch payment data for chart - modificado para mostrar pendente em março
-  const { data: paymentsByMonth = [] } = useQuery({
-    queryKey: ["payments-by-month"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("payments")
-        .select("amount, payment_date, status, due_date")
-        .order("due_date");
-
-      const monthlyData = data?.reduce((acc: any, payment) => {
-        if (!payment.due_date) return acc;
-        
-        // Usar due_date em vez de payment_date para organizar os pagamentos por mês devido
-        const paymentDate = new Date(payment.due_date);
-        const month = paymentDate.toLocaleString("default", {
-          month: "short",
-        });
-        
-        if (!acc[month]) {
-          acc[month] = { paid: 0, pending: 0, overdue: 0 };
-        }
-        
-        // Incrementar o valor na categoria correta baseado no status
-        acc[month][payment.status] += Number(payment.amount);
-        
-        return acc;
-      }, {});
-
-      // Garantir que março tenha pagamento pendente visível
-      if (monthlyData && monthlyData["mar"]) {
-        if (monthlyData["mar"].pending === 0) {
-          // Adicionamos um valor para representar o aluno pendente em março
-          monthlyData["mar"].pending = 100; // Valor arbitrário para exemplo
-          // Podemos ajustar os valores pagos se necessário para manter a consistência
-        }
-      }
-
-      return Object.entries(monthlyData || {}).map(([month, values]: [string, any]) => ({
-        month,
-        ...values,
-      }));
-    },
-  });
-
-  // Financial overview data for pie chart
-  const financialOverview = [
-    { name: "Pagamentos", value: totalPayments },
-    { name: "Receitas Extras", value: totalAdditionalIncome },
-    { name: "Despesas", value: totalExpenses },
-  ];
-
-  const COLORS = ["#22C55E", "#3B82F6", "#EF4444"];
-
-  const chartConfig = {
-    paid: {
-      label: "Pagos",
-      theme: {
-        light: "#22C55E",
-        dark: "#22C55E",
-      },
-    },
-    pending: {
-      label: "Pendentes",
-      theme: {
-        light: "#EAB308",
-        dark: "#EAB308",
-      },
-    },
-    overdue: {
-      label: "Atrasados",
-      theme: {
-        light: "#EF4444",
-        dark: "#EF4444",
-      },
-    },
-  };
-
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -196,9 +108,11 @@ const Index = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-6">
+        <Card className="p-6 border border-slate-200 bg-white/50 shadow-sm transition-all duration-300 hover:shadow-md">
           <div className="flex items-center space-x-4">
-            <Users className="w-8 h-8 text-primary" />
+            <div className="bg-primary/10 p-3 rounded-full">
+              <Users className="w-8 h-8 text-primary" />
+            </div>
             <div>
               <p className="text-sm text-gray-500">Total de Alunos</p>
               <p className="text-2xl font-bold">{studentsCount}</p>
@@ -206,9 +120,11 @@ const Index = () => {
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 border border-slate-200 bg-white/50 shadow-sm transition-all duration-300 hover:shadow-md">
           <div className="flex items-center space-x-4">
-            <TrendingUp className="w-8 h-8 text-emerald-500" />
+            <div className="bg-emerald-500/10 p-3 rounded-full">
+              <TrendingUp className="w-8 h-8 text-emerald-500" />
+            </div>
             <div>
               <p className="text-sm text-gray-500">Receitas Totais</p>
               <p className="text-2xl font-bold text-emerald-500">
@@ -218,9 +134,11 @@ const Index = () => {
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 border border-slate-200 bg-white/50 shadow-sm transition-all duration-300 hover:shadow-md">
           <div className="flex items-center space-x-4">
-            <TrendingDown className="w-8 h-8 text-red-500" />
+            <div className="bg-red-500/10 p-3 rounded-full">
+              <TrendingDown className="w-8 h-8 text-red-500" />
+            </div>
             <div>
               <p className="text-sm text-gray-500">Despesas Totais</p>
               <p className="text-2xl font-bold text-red-500">
@@ -230,9 +148,11 @@ const Index = () => {
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 border border-slate-200 bg-white/50 shadow-sm transition-all duration-300 hover:shadow-md">
           <div className="flex items-center space-x-4">
-            <DollarSign className="w-8 h-8 text-primary" />
+            <div className={`${totalBalance >= 0 ? 'bg-emerald-500/10' : 'bg-red-500/10'} p-3 rounded-full`}>
+              <DollarSign className={`w-8 h-8 ${totalBalance >= 0 ? 'text-emerald-500' : 'text-red-500'}`} />
+            </div>
             <div>
               <p className="text-sm text-gray-500">Saldo Total</p>
               <p className={`text-2xl font-bold ${totalBalance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
@@ -242,12 +162,14 @@ const Index = () => {
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 border border-slate-200 bg-white/50 shadow-sm transition-all duration-300 hover:shadow-md">
           <div className="flex items-center space-x-4">
-            <CreditCard className="w-8 h-8 text-primary" />
+            <div className="bg-blue-500/10 p-3 rounded-full">
+              <CreditCard className="w-8 h-8 text-blue-500" />
+            </div>
             <div>
               <p className="text-sm text-gray-500">Pagamentos Recebidos</p>
-              <p className="text-2xl font-bold">
+              <p className="text-2xl font-bold text-blue-500">
                 {formatCurrency(totalPayments)}
               </p>
             </div>
@@ -259,63 +181,7 @@ const Index = () => {
         <StudentStatusList />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Pagamentos por Mês</h2>
-          <div className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={paymentsByMonth}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis
-                  tickFormatter={(value) =>
-                    formatCurrency(value)
-                  }
-                />
-                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                <Bar dataKey="paid" name="Pagos" stackId="a" fill="#22C55E" />
-                <Bar
-                  dataKey="pending"
-                  name="Pendentes"
-                  stackId="a"
-                  fill="#EAB308"
-                />
-                <Bar
-                  dataKey="overdue"
-                  name="Atrasados"
-                  stackId="a"
-                  fill="#EF4444"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Visão Geral Financeira</h2>
-          <div className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={financialOverview}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name}: ${formatCurrency(value)}`}
-                  outerRadius={150}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {financialOverview.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      </div>
+      <FinancialOverview />
     </div>
   );
 };
