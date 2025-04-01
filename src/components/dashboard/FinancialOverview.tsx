@@ -1,4 +1,3 @@
-
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +8,7 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   Legend,
   LineChart,
   Line,
@@ -259,9 +258,23 @@ const FinancialOverview = () => {
                 tick={{ fill: '#666' }}
                 axisLine={{ stroke: '#ddd' }}
               />
-              <ChartTooltip>
-                <ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />
-              </ChartTooltip>
+              <RechartsTooltip 
+                content={({ active, payload, label }) => {
+                  if (active && payload && payload.length) {
+                    return (
+                      <div className="bg-white p-2 border border-gray-200 shadow-md rounded">
+                        <p className="text-gray-600">{`Mês: ${label}`}</p>
+                        {payload.map((entry) => (
+                          <p key={entry.name} style={{ color: entry.color }}>
+                            {`${entry.name}: ${formatCurrency(entry.value as number)}`}
+                          </p>
+                        ))}
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
               <Legend />
               <Bar dataKey="revenue" name="Receitas" fill="var(--color-revenue)" radius={[4, 4, 0, 0]} />
               <Bar dataKey="expenses" name="Despesas" fill="var(--color-expenses)" radius={[4, 4, 0, 0]} />
@@ -297,9 +310,23 @@ const FinancialOverview = () => {
                 tick={{ fill: '#666' }}
                 axisLine={{ stroke: '#ddd' }}
               />
-              <ChartTooltip>
-                <ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />
-              </ChartTooltip>
+              <RechartsTooltip 
+                content={({ active, payload, label }) => {
+                  if (active && payload && payload.length) {
+                    return (
+                      <div className="bg-white p-2 border border-gray-200 shadow-md rounded">
+                        <p className="text-gray-600">{`Mês: ${label}`}</p>
+                        {payload.map((entry) => (
+                          <p key={entry.name} style={{ color: entry.color }}>
+                            {`${entry.name}: ${formatCurrency(entry.value as number)}`}
+                          </p>
+                        ))}
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
               <Legend />
               <Bar dataKey="paid" name="Pagos" stackId="a" fill="var(--color-paid)" radius={[4, 4, 0, 0]} />
               <Bar dataKey="pending" name="Pendentes" stackId="a" fill="var(--color-pending)" radius={[4, 4, 0, 0]} />
@@ -327,7 +354,23 @@ const FinancialOverview = () => {
                 tick={{ fill: '#666' }}
                 axisLine={{ stroke: '#ddd' }}
               />
-              <ChartTooltip />
+              <RechartsTooltip
+                content={({ active, payload, label }) => {
+                  if (active && payload && payload.length) {
+                    return (
+                      <div className="bg-white p-2 border border-gray-200 shadow-md rounded">
+                        <p className="text-gray-600">{`Mês: ${label}`}</p>
+                        {payload.map((entry) => (
+                          <p key={entry.name} style={{ color: entry.color }}>
+                            {`${entry.name}: ${entry.value}`}
+                          </p>
+                        ))}
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
               <Legend />
               <Line
                 type="monotone"
