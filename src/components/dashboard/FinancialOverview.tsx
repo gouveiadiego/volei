@@ -1,3 +1,4 @@
+
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,8 +19,7 @@ import { format, subMonths, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
   ChartContainer,
-  ChartTooltip, 
-  ChartTooltipContent
+  ChartTooltip
 } from "@/components/ui/chart";
 
 const formatCurrency = (value: number) => {
@@ -166,13 +166,12 @@ const FinancialOverview = () => {
 
   if (isLoading) {
     return (
-      <Card className="border border-slate-200 bg-white/50 shadow-md backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-xl">Visão Geral Financeira</CardTitle>
+      <Card className="border border-slate-200 bg-white shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xl text-center">Carregando dados financeiros...</CardTitle>
         </CardHeader>
-        <CardContent className="flex items-center justify-center h-80">
+        <CardContent className="flex items-center justify-center h-60">
           <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-primary"></div>
-          <p className="ml-2">Carregando dados...</p>
         </CardContent>
       </Card>
     );
@@ -237,159 +236,181 @@ const FinancialOverview = () => {
     },
   };
   
+  const customTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 border border-gray-200 shadow-md rounded-lg">
+          <p className="text-gray-700 font-semibold border-b pb-1 mb-2">{`${label}`}</p>
+          {payload.map((entry: any) => (
+            <div key={entry.name} className="flex justify-between items-center py-1">
+              <div className="flex items-center gap-2">
+                <div 
+                  className="w-3 h-3 rounded-full" 
+                  style={{ backgroundColor: entry.color }}
+                />
+                <span className="text-sm text-gray-600">{entry.name}:</span>
+              </div>
+              <span className="text-sm font-medium">
+                {typeof entry.value === 'number' && entry.payload.isMonetary ? 
+                  formatCurrency(entry.value) : entry.value}
+              </span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+  
+  // Add isMonetary flag to distinguish between monetary and non-monetary values
+  const financialDataWithFlags = financialData.map(item => ({
+    ...item,
+    isMonetary: true
+  }));
+  
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Receitas vs. Despesas */}
-      <Card className="border border-slate-200 bg-white/50 shadow-md backdrop-blur-sm">
-        <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-t-lg">
-          <CardTitle className="text-center text-xl">Receitas vs. Despesas</CardTitle>
+      <Card className="border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-indigo-500/90 to-purple-600/90 text-white">
+          <CardTitle className="text-xl font-semibold text-center">Receitas vs. Despesas</CardTitle>
         </CardHeader>
-        <CardContent className="pt-6 px-2 h-80">
-          <ChartContainer config={chartConfig}>
-            <ComposedChart data={financialData}>
+        <CardContent className="p-4 h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={financialDataWithFlags}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis 
                 dataKey="month" 
-                tick={{ fill: '#666' }}
+                tick={{ fill: '#666', fontSize: 12 }}
                 axisLine={{ stroke: '#ddd' }}
+                tickLine={{ stroke: '#ddd' }}
               />
               <YAxis 
                 tickFormatter={(value) => formatCurrency(value)} 
-                tick={{ fill: '#666' }}
+                tick={{ fill: '#666', fontSize: 12 }}
                 axisLine={{ stroke: '#ddd' }}
+                tickLine={{ stroke: '#ddd' }}
               />
-              <RechartsTooltip 
-                content={({ active, payload, label }) => {
-                  if (active && payload && payload.length) {
-                    return (
-                      <div className="bg-white p-2 border border-gray-200 shadow-md rounded">
-                        <p className="text-gray-600">{`Mês: ${label}`}</p>
-                        {payload.map((entry) => (
-                          <p key={entry.name} style={{ color: entry.color }}>
-                            {`${entry.name}: ${formatCurrency(entry.value as number)}`}
-                          </p>
-                        ))}
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
+              <RechartsTooltip content={customTooltip} />
+              <Legend verticalAlign="bottom" height={36} />
+              <Bar 
+                dataKey="revenue" 
+                name="Receitas" 
+                fill="#22C55E" 
+                radius={[4, 4, 0, 0]} 
+                opacity={0.8}
               />
-              <Legend />
-              <Bar dataKey="revenue" name="Receitas" fill="var(--color-revenue)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="expenses" name="Despesas" fill="var(--color-expenses)" radius={[4, 4, 0, 0]} />
+              <Bar 
+                dataKey="expenses" 
+                name="Despesas" 
+                fill="#EF4444" 
+                radius={[4, 4, 0, 0]} 
+                opacity={0.8}
+              />
               <Line
                 type="monotone"
                 dataKey="balance"
                 name="Saldo"
-                stroke="var(--color-balance)"
+                stroke="#3B82F6"
                 strokeWidth={2}
-                dot={{ fill: 'var(--color-balance)', strokeWidth: 2 }}
+                dot={{ fill: '#3B82F6', strokeWidth: 2 }}
               />
             </ComposedChart>
-          </ChartContainer>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
       
       {/* Status dos Pagamentos */}
-      <Card className="border border-slate-200 bg-white/50 shadow-md backdrop-blur-sm">
-        <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-t-lg">
-          <CardTitle className="text-center text-xl">Status dos Pagamentos</CardTitle>
+      <Card className="border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-indigo-500/90 to-purple-600/90 text-white">
+          <CardTitle className="text-xl font-semibold text-center">Status dos Pagamentos</CardTitle>
         </CardHeader>
-        <CardContent className="pt-6 px-2 h-80">
-          <ChartContainer config={chartConfig}>
-            <BarChart data={financialData}>
+        <CardContent className="p-4 h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={financialDataWithFlags}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis 
                 dataKey="month" 
-                tick={{ fill: '#666' }}
+                tick={{ fill: '#666', fontSize: 12 }}
                 axisLine={{ stroke: '#ddd' }}
+                tickLine={{ stroke: '#ddd' }}
               />
               <YAxis 
                 tickFormatter={(value) => formatCurrency(value)} 
-                tick={{ fill: '#666' }}
+                tick={{ fill: '#666', fontSize: 12 }}
                 axisLine={{ stroke: '#ddd' }}
+                tickLine={{ stroke: '#ddd' }}
               />
-              <RechartsTooltip 
-                content={({ active, payload, label }) => {
-                  if (active && payload && payload.length) {
-                    return (
-                      <div className="bg-white p-2 border border-gray-200 shadow-md rounded">
-                        <p className="text-gray-600">{`Mês: ${label}`}</p>
-                        {payload.map((entry) => (
-                          <p key={entry.name} style={{ color: entry.color }}>
-                            {`${entry.name}: ${formatCurrency(entry.value as number)}`}
-                          </p>
-                        ))}
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
+              <RechartsTooltip content={customTooltip} />
+              <Legend verticalAlign="bottom" height={36} />
+              <Bar 
+                dataKey="paid" 
+                name="Pagos" 
+                stackId="a" 
+                fill="#22C55E" 
+                radius={[4, 4, 0, 0]} 
               />
-              <Legend />
-              <Bar dataKey="paid" name="Pagos" stackId="a" fill="var(--color-paid)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="pending" name="Pendentes" stackId="a" fill="var(--color-pending)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="overdue" name="Atrasados" stackId="a" fill="var(--color-overdue)" radius={[4, 4, 0, 0]} />
+              <Bar 
+                dataKey="pending" 
+                name="Pendentes" 
+                stackId="a" 
+                fill="#F59E0B" 
+                radius={[4, 4, 0, 0]} 
+              />
+              <Bar 
+                dataKey="overdue" 
+                name="Atrasados" 
+                stackId="a" 
+                fill="#EF4444" 
+                radius={[4, 4, 0, 0]} 
+              />
             </BarChart>
-          </ChartContainer>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
       
       {/* Alunos Pagantes vs. Pendentes */}
-      <Card className="border border-slate-200 bg-white/50 shadow-md backdrop-blur-sm">
-        <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-t-lg">
-          <CardTitle className="text-center text-xl">Alunos por Status de Pagamento</CardTitle>
+      <Card className="border border-slate-200 bg-white shadow-sm overflow-hidden lg:col-span-2">
+        <CardHeader className="bg-gradient-to-r from-indigo-500/90 to-purple-600/90 text-white">
+          <CardTitle className="text-xl font-semibold text-center">Alunos por Status de Pagamento</CardTitle>
         </CardHeader>
-        <CardContent className="pt-6 px-2 h-80">
-          <ChartContainer config={chartConfig}>
-            <LineChart data={financialData}>
+        <CardContent className="p-4 h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={financialData.map(item => ({...item, isMonetary: false}))}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis 
                 dataKey="month" 
-                tick={{ fill: '#666' }}
+                tick={{ fill: '#666', fontSize: 12 }}
                 axisLine={{ stroke: '#ddd' }}
+                tickLine={{ stroke: '#ddd' }}
               />
               <YAxis 
-                tick={{ fill: '#666' }}
+                tick={{ fill: '#666', fontSize: 12 }}
                 axisLine={{ stroke: '#ddd' }}
+                tickLine={{ stroke: '#ddd' }}
               />
-              <RechartsTooltip
-                content={({ active, payload, label }) => {
-                  if (active && payload && payload.length) {
-                    return (
-                      <div className="bg-white p-2 border border-gray-200 shadow-md rounded">
-                        <p className="text-gray-600">{`Mês: ${label}`}</p>
-                        {payload.map((entry) => (
-                          <p key={entry.name} style={{ color: entry.color }}>
-                            {`${entry.name}: ${entry.value}`}
-                          </p>
-                        ))}
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-              <Legend />
+              <RechartsTooltip content={customTooltip} />
+              <Legend verticalAlign="bottom" height={36} />
               <Line
                 type="monotone"
                 dataKey="studentsPaid"
                 name="Alunos em dia"
-                stroke="var(--color-studentsPaid)"
+                stroke="#22C55E"
                 strokeWidth={2}
-                dot={{ fill: 'var(--color-studentsPaid)', strokeWidth: 2 }}
+                dot={{ fill: '#22C55E', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#22C55E', strokeWidth: 1 }}
               />
               <Line
                 type="monotone"
                 dataKey="studentsUnpaid"
                 name="Alunos pendentes"
-                stroke="var(--color-studentsUnpaid)"
+                stroke="#F59E0B"
                 strokeWidth={2}
-                dot={{ fill: 'var(--color-studentsUnpaid)', strokeWidth: 2 }}
+                dot={{ fill: '#F59E0B', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#F59E0B', strokeWidth: 1 }}
               />
             </LineChart>
-          </ChartContainer>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
     </div>

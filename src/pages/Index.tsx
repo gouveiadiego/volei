@@ -1,7 +1,17 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, CreditCard, TrendingUp, TrendingDown, DollarSign, LogOut } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Users, 
+  CreditCard, 
+  TrendingUp, 
+  TrendingDown, 
+  DollarSign, 
+  LogOut,
+  Calendar,
+  LayoutDashboard
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -92,11 +102,16 @@ const Index = () => {
   };
 
   const formattedDate = format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR });
+  const formattedDateCapitalized = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-primary">Dashboard</h1>
+      {/* Header section with date and logout button */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-primary mb-1">Dashboard</h1>
+          <p className="text-muted-foreground">{formattedDateCapitalized}</p>
+        </div>
         <Button
           variant="outline"
           onClick={handleLogout}
@@ -107,81 +122,96 @@ const Index = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-6 border border-slate-200 bg-white/50 shadow-sm transition-all duration-300 hover:shadow-md">
-          <div className="flex items-center space-x-4">
-            <div className="bg-primary/10 p-3 rounded-full">
-              <Users className="w-8 h-8 text-primary" />
+      {/* KPI Cards section */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="p-4 border-l-4 border-l-primary border-t border-r border-b bg-gradient-to-br from-white to-slate-50 shadow-sm hover:shadow-md transition-all">
+          <div className="flex flex-col space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-muted-foreground">Alunos</p>
+              <div className="p-2 bg-primary/10 rounded-full">
+                <Users className="w-4 h-4 text-primary" />
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Total de Alunos</p>
+            <div className="flex items-baseline justify-between">
               <p className="text-2xl font-bold">{studentsCount}</p>
+              <p className="text-xs text-muted-foreground">total</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 border border-slate-200 bg-white/50 shadow-sm transition-all duration-300 hover:shadow-md">
-          <div className="flex items-center space-x-4">
-            <div className="bg-emerald-500/10 p-3 rounded-full">
-              <TrendingUp className="w-8 h-8 text-emerald-500" />
+        <Card className="p-4 border-l-4 border-l-emerald-500 border-t border-r border-b bg-gradient-to-br from-white to-emerald-50 shadow-sm hover:shadow-md transition-all">
+          <div className="flex flex-col space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-muted-foreground">Receitas</p>
+              <div className="p-2 bg-emerald-500/10 rounded-full">
+                <TrendingUp className="w-4 h-4 text-emerald-500" />
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Receitas Totais</p>
+            <div className="flex items-baseline justify-between">
               <p className="text-2xl font-bold text-emerald-500">
                 {formatCurrency(totalPayments + totalAdditionalIncome)}
               </p>
+              <p className="text-xs text-muted-foreground">total</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 border border-slate-200 bg-white/50 shadow-sm transition-all duration-300 hover:shadow-md">
-          <div className="flex items-center space-x-4">
-            <div className="bg-red-500/10 p-3 rounded-full">
-              <TrendingDown className="w-8 h-8 text-red-500" />
+        <Card className="p-4 border-l-4 border-l-red-500 border-t border-r border-b bg-gradient-to-br from-white to-red-50 shadow-sm hover:shadow-md transition-all">
+          <div className="flex flex-col space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-muted-foreground">Despesas</p>
+              <div className="p-2 bg-red-500/10 rounded-full">
+                <TrendingDown className="w-4 h-4 text-red-500" />
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Despesas Totais</p>
+            <div className="flex items-baseline justify-between">
               <p className="text-2xl font-bold text-red-500">
                 {formatCurrency(totalExpenses)}
               </p>
+              <p className="text-xs text-muted-foreground">total</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 border border-slate-200 bg-white/50 shadow-sm transition-all duration-300 hover:shadow-md">
-          <div className="flex items-center space-x-4">
-            <div className={`${totalBalance >= 0 ? 'bg-emerald-500/10' : 'bg-red-500/10'} p-3 rounded-full`}>
-              <DollarSign className={`w-8 h-8 ${totalBalance >= 0 ? 'text-emerald-500' : 'text-red-500'}`} />
+        <Card className="p-4 border-l-4 border-l-blue-500 border-t border-r border-b bg-gradient-to-br from-white to-blue-50 shadow-sm hover:shadow-md transition-all">
+          <div className="flex flex-col space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-muted-foreground">Saldo</p>
+              <div className={`p-2 ${totalBalance >= 0 ? 'bg-blue-500/10' : 'bg-red-500/10'} rounded-full`}>
+                <DollarSign className={`w-4 h-4 ${totalBalance >= 0 ? 'text-blue-500' : 'text-red-500'}`} />
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Saldo Total</p>
-              <p className={`text-2xl font-bold ${totalBalance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+            <div className="flex items-baseline justify-between">
+              <p className={`text-2xl font-bold ${totalBalance >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
                 {formatCurrency(totalBalance)}
               </p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 border border-slate-200 bg-white/50 shadow-sm transition-all duration-300 hover:shadow-md">
-          <div className="flex items-center space-x-4">
-            <div className="bg-blue-500/10 p-3 rounded-full">
-              <CreditCard className="w-8 h-8 text-blue-500" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Pagamentos Recebidos</p>
-              <p className="text-2xl font-bold text-blue-500">
-                {formatCurrency(totalPayments)}
-              </p>
+              <p className="text-xs text-muted-foreground">atual</p>
             </div>
           </div>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
-        <StudentStatusList />
-      </div>
-
-      <FinancialOverview />
+      {/* Tabs section */}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 md:w-auto md:inline-flex">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <LayoutDashboard className="w-4 h-4" />
+            <span className="hidden md:inline">Visão Geral</span>
+          </TabsTrigger>
+          <TabsTrigger value="students" className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            <span className="hidden md:inline">Alunos</span>
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview" className="space-y-6 pt-4">
+          <FinancialOverview />
+        </TabsContent>
+        
+        <TabsContent value="students" className="space-y-6 pt-4">
+          <StudentStatusList />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
