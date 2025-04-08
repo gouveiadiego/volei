@@ -57,7 +57,7 @@ export default function Alunos() {
   };
 
   const handleEditarAluno = (aluno: Tables<"students">) => {
-    setEditAluno(aluno);
+    setEditAluno(aluno as StudentWithInactiveInfo);
   };
 
   const handleEditClosed = () => {

@@ -21,7 +21,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
@@ -63,23 +62,28 @@ export function EditarAluno({ aluno, onClose }: EditarAlunoProps) {
     console.log("Enviando dados atualizados do aluno:", data);
     
     try {
+      // Preparar os dados para atualização
+      const updateData = {
+        name: data.nome,
+        email: data.email || null,
+        phone: data.telefone || null,
+        active: data.status === "ativo",
+        inactive_reason: data.status === "inativo" ? data.inativo_motivo : null,
+        inactive_date: data.status === "inativo" ? data.inativo_data : null,
+      };
+
+      console.log("Dados de atualização:", updateData);
+      
       const { error } = await supabase
         .from("students")
-        .update({
-          name: data.nome,
-          email: data.email,
-          phone: data.telefone,
-          active: data.status === "ativo",
-          inactive_reason: data.status === "inativo" ? data.inativo_motivo : null,
-          inactive_date: data.status === "inativo" ? data.inativo_data : null,
-        })
+        .update(updateData)
         .eq("id", aluno.id);
 
       if (error) {
         console.error("Erro ao atualizar aluno:", error);
         toast({
           title: "Erro ao atualizar aluno",
-          description: "Ocorreu um erro ao salvar os dados do aluno.",
+          description: `Ocorreu um erro: ${error.message}`,
           variant: "destructive",
         });
         return;
