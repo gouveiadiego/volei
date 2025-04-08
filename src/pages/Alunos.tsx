@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { StudentWithInactiveInfo } from "@/types/student";
+import { Tables } from "@/integrations/supabase/types";
 
 export default function Alunos() {
   const [showForm, setShowForm] = useState(false);
