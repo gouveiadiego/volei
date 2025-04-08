@@ -66,6 +66,7 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
         const { data, error } = await supabase
           .from("students")
           .select("*")
+          .eq("active", true) // Apenas alunos ativos
           .order("name");
 
         if (error) {
@@ -160,7 +161,7 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
                       {isLoading ? (
                         <SelectItem value="loading" disabled>Carregando alunos...</SelectItem>
                       ) : students.length === 0 ? (
-                        <SelectItem value="no-students" disabled>Nenhum aluno cadastrado</SelectItem>
+                        <SelectItem value="no-students" disabled>Nenhum aluno ativo cadastrado</SelectItem>
                       ) : (
                         students.map((student) => (
                           <SelectItem key={student.id} value={student.id}>

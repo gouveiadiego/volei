@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,7 +9,8 @@ import {
   DollarSign, 
   LogOut,
   Calendar,
-  LayoutDashboard
+  LayoutDashboard,
+  UserMinus
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import StudentStatusList from "@/components/dashboard/StudentStatusList";
 import FinancialOverview from "@/components/dashboard/FinancialOverview";
+import InactiveStudentsSummary from "@/components/dashboard/InactiveStudentsSummary";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -39,18 +40,28 @@ const Index = () => {
     }
   };
 
-  // Fetch total number of students
   const { data: studentsCount = 0 } = useQuery({
-    queryKey: ["students-count"],
+    queryKey: ["active-students-count"],
     queryFn: async () => {
       const { count } = await supabase
         .from("students")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("active", true);
       return count;
     },
   });
 
-  // Fetch total payments received
+  const { data: inactiveStudentsCount = 0 } = useQuery({
+    queryKey: ["inactive-students-count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("students")
+        .select("*", { count: "exact", head: true })
+        .eq("active", false);
+      return count;
+    },
+  });
+
   const { data: totalPayments = 0 } = useQuery({
     queryKey: ["payments-total"],
     queryFn: async () => {
@@ -62,7 +73,6 @@ const Index = () => {
     },
   });
 
-  // Fetch total additional income
   const { data: totalAdditionalIncome = 0 } = useQuery({
     queryKey: ["additional-income-total"],
     queryFn: async () => {
@@ -73,7 +83,6 @@ const Index = () => {
     },
   });
 
-  // Fetch total expenses
   const { data: totalExpenses = 0 } = useQuery({
     queryKey: ["expenses-total"],
     queryFn: async () => {
@@ -91,7 +100,6 @@ const Index = () => {
     },
   });
 
-  // Calculate total balance
   const totalBalance = (totalPayments + totalAdditionalIncome) - totalExpenses;
 
   const formatCurrency = (value: number) => {
@@ -106,7 +114,6 @@ const Index = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header section with date and logout button */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-primary mb-1">Dashboard</h1>
@@ -122,19 +129,33 @@ const Index = () => {
         </Button>
       </div>
 
-      {/* KPI Cards section */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4 border-l-4 border-l-primary border-t border-r border-b bg-gradient-to-br from-white to-slate-50 shadow-sm hover:shadow-md transition-all">
           <div className="flex flex-col space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-muted-foreground">Alunos</p>
+              <p className="text-sm font-medium text-muted-foreground">Alunos Ativos</p>
               <div className="p-2 bg-primary/10 rounded-full">
                 <Users className="w-4 h-4 text-primary" />
               </div>
             </div>
             <div className="flex items-baseline justify-between">
               <p className="text-2xl font-bold">{studentsCount}</p>
-              <p className="text-xs text-muted-foreground">total</p>
+              <p className="text-xs text-muted-foreground">ativos</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-4 border-l-4 border-l-amber-500 border-t border-r border-b bg-gradient-to-br from-white to-amber-50 shadow-sm hover:shadow-md transition-all">
+          <div className="flex flex-col space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-muted-foreground">Inativos</p>
+              <div className="p-2 bg-amber-500/10 rounded-full">
+                <UserMinus className="w-4 h-4 text-amber-500" />
+              </div>
+            </div>
+            <div className="flex items-baseline justify-between">
+              <p className="text-2xl font-bold text-amber-600">{inactiveStudentsCount}</p>
+              <p className="text-xs text-muted-foreground">inativos</p>
             </div>
           </div>
         </Card>
@@ -191,16 +212,19 @@ const Index = () => {
         </Card>
       </div>
 
-      {/* Tabs section */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:w-auto md:inline-flex">
+        <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-flex">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <LayoutDashboard className="w-4 h-4" />
             <span className="hidden md:inline">Visão Geral</span>
           </TabsTrigger>
           <TabsTrigger value="students" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
-            <span className="hidden md:inline">Alunos</span>
+            <span className="hidden md:inline">Alunos Ativos</span>
+          </TabsTrigger>
+          <TabsTrigger value="inactive" className="flex items-center gap-2">
+            <UserMinus className="w-4 h-4" />
+            <span className="hidden md:inline">Alunos Inativos</span>
           </TabsTrigger>
         </TabsList>
         
@@ -210,6 +234,10 @@ const Index = () => {
         
         <TabsContent value="students" className="space-y-6 pt-4">
           <StudentStatusList />
+        </TabsContent>
+        
+        <TabsContent value="inactive" className="space-y-6 pt-4">
+          <InactiveStudentsSummary />
         </TabsContent>
       </Tabs>
     </div>

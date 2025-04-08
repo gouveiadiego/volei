@@ -56,6 +56,8 @@ export function CadastroAluno({ onClose }: CadastroAlunoProps) {
         email: data.email,
         phone: data.telefone,
         active: data.status === "ativo",
+        inactive_reason: data.status === "inativo" ? "Inativo desde o cadastro" : null,
+        inactive_date: data.status === "inativo" ? new Date().toISOString().split('T')[0] : null,
       });
 
       if (error) {

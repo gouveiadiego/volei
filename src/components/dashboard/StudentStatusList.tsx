@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 interface Student {
   id: string;
   name: string;
+  active: boolean;
   payments: {
     status: "paid" | "pending" | "overdue";
     due_date: string;
@@ -48,12 +49,13 @@ const StudentStatusList = () => {
         .select(`
           id,
           name,
+          active,
           payments (
             status,
             due_date
           )
         `)
-        .eq('active', true)
+        .eq('active', true) // Filtra apenas alunos ativos
         .order('name');
 
       if (studentsError) {
