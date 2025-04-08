@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -15,18 +16,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 
 const formSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
   email: z.string().email("Email inválido"),
   telefone: z.string().min(1, "Telefone é obrigatório"),
   status: z.enum(["ativo", "inativo"]),
+  inativo_motivo: z.string().nullable().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -37,6 +41,8 @@ interface CadastroAlunoProps {
 
 export function CadastroAluno({ onClose }: CadastroAlunoProps) {
   const { toast } = useToast();
+  const [mostrarCamposInativo, setMostrarCamposInativo] = useState(false);
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -44,6 +50,7 @@ export function CadastroAluno({ onClose }: CadastroAlunoProps) {
       email: "",
       telefone: "",
       status: "ativo",
+      inativo_motivo: "",
     },
   });
 
@@ -56,7 +63,7 @@ export function CadastroAluno({ onClose }: CadastroAlunoProps) {
         email: data.email,
         phone: data.telefone,
         active: data.status === "ativo",
-        inactive_reason: data.status === "inativo" ? "Inativo desde o cadastro" : null,
+        inactive_reason: data.status === "inativo" ? data.inativo_motivo : null,
         inactive_date: data.status === "inativo" ? new Date().toISOString().split('T')[0] : null,
       });
 
@@ -85,6 +92,11 @@ export function CadastroAluno({ onClose }: CadastroAlunoProps) {
         variant: "destructive",
       });
     }
+  };
+
+  const handleStatusChange = (value: string) => {
+    setMostrarCamposInativo(value === "inativo");
+    form.setValue("status", value as "ativo" | "inativo");
   };
 
   return (
@@ -155,7 +167,7 @@ export function CadastroAluno({ onClose }: CadastroAlunoProps) {
               <FormItem>
                 <FormLabel>Status</FormLabel>
                 <Select
-                  onValueChange={field.onChange}
+                  onValueChange={handleStatusChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
@@ -172,6 +184,26 @@ export function CadastroAluno({ onClose }: CadastroAlunoProps) {
               </FormItem>
             )}
           />
+
+          {mostrarCamposInativo && (
+            <FormField
+              control={form.control}
+              name="inativo_motivo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Motivo da Inativação</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Digite o motivo da inativação"
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={onClose}>

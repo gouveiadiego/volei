@@ -6,14 +6,14 @@ import { useState, useEffect } from "react";
 import { CadastroAluno } from "@/components/CadastroAluno";
 import { EditarAluno } from "@/components/EditarAluno";
 import { supabase } from "@/integrations/supabase/client";
-import { Tables } from "@/integrations/supabase/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { StudentWithInactiveInfo } from "@/types/student";
 
 export default function Alunos() {
   const [showForm, setShowForm] = useState(false);
-  const [editAluno, setEditAluno] = useState<Tables<"students"> | null>(null);
-  const [alunos, setAlunos] = useState<Tables<"students">[]>([]);
+  const [editAluno, setEditAluno] = useState<StudentWithInactiveInfo | null>(null);
+  const [alunos, setAlunos] = useState<StudentWithInactiveInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filtro, setFiltro] = useState<"todos" | "ativos" | "inativos">("ativos");
 
@@ -37,7 +37,7 @@ export default function Alunos() {
       }
 
       console.log("Students fetched:", data);
-      setAlunos(data);
+      setAlunos(data as StudentWithInactiveInfo[]);
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -123,7 +123,7 @@ export default function Alunos() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium">{aluno.name}</h3>
-                    <Badge variant={aluno.active ? "success" : "destructive"} className="text-xs">
+                    <Badge variant={aluno.active ? "outline" : "destructive"} className="text-xs">
                       {aluno.active ? "Ativo" : "Inativo"}
                     </Badge>
                   </div>

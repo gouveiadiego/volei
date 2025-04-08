@@ -24,8 +24,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Tables } from "@/integrations/supabase/types";
 import { useState } from "react";
+import { StudentWithInactiveInfo } from "@/types/student";
 
 const formSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
@@ -39,7 +39,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface EditarAlunoProps {
-  aluno: Tables<"students">;
+  aluno: StudentWithInactiveInfo;
   onClose: () => void;
 }
 

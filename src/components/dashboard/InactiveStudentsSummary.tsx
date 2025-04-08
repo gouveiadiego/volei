@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { UserMinus, Users } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { StudentWithInactiveInfo } from "@/types/student";
 
 const InactiveStudentsSummary = () => {
   // Fetch inactive students
@@ -18,7 +19,7 @@ const InactiveStudentsSummary = () => {
         .order("inactive_date", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as StudentWithInactiveInfo[];
     },
   });
 
