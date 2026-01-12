@@ -480,42 +480,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      assign_admin_role: {
-        Args: { admin_email: string }
-        Returns: undefined
-      }
-      assign_tenant_role: {
-        Args: { user_id: string }
-        Returns: undefined
-      }
-      bootstrap_first_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      assign_admin_role: { Args: { admin_email: string }; Returns: undefined }
+      assign_tenant_role: { Args: { user_id: string }; Returns: undefined }
+      bootstrap_first_admin: { Args: never; Returns: undefined }
       create_tenant_access: {
         Args: { p_email: string; p_inquilino_id: string; p_password: string }
         Returns: Json
       }
-      get_first_user_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_first_user_id: { Args: never; Returns: string }
       has_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
       }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_admin_user: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_own_user_role: {
-        Args: { role_user_id: string }
-        Returns: boolean
-      }
+      is_admin: { Args: never; Returns: boolean }
+      is_admin_user: { Args: never; Returns: boolean }
+      is_own_user_role: { Args: { role_user_id: string }; Returns: boolean }
       upsert_user_notification_preferences: {
         Args: {
           p_alert_days_before: number
