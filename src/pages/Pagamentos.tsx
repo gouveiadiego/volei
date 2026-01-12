@@ -21,6 +21,7 @@ interface Payment {
   due_date: string;
   payment_date: string | null;
   status: "pending" | "paid" | "overdue";
+  student_id: string;
   student: {
     name: string;
   };
@@ -61,6 +62,7 @@ export default function Pagamentos() {
   const [expenseToEdit, setExpenseToEdit] = useState<ExtraExpense | undefined>();
   const [incomeToEdit, setIncomeToEdit] = useState<AdditionalIncome | undefined>();
   const [courtExpenseToEdit, setCourtExpenseToEdit] = useState<CourtExpense | undefined>();
+  const [paymentToEdit, setPaymentToEdit] = useState<Payment | undefined>();
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -75,6 +77,7 @@ export default function Pagamentos() {
           due_date,
           payment_date,
           status,
+          student_id,
           student:students(name)
         `)
         .order("due_date", { ascending: false });
@@ -170,7 +173,37 @@ export default function Pagamentos() {
 
   const handlePaymentAdded = () => {
     setShowCadastro(false);
+    setPaymentToEdit(undefined);
     fetchPayments();
+  };
+
+  const handleEditPayment = (payment: Payment) => {
+    setPaymentToEdit(payment);
+    setShowCadastro(true);
+  };
+
+  const handleDeletePayment = async (id: string) => {
+    try {
+      console.log("Deleting payment:", id);
+      const { error } = await supabase
+        .from("payments")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Pagamento removido com sucesso!",
+      });
+      fetchPayments();
+    } catch (error) {
+      console.error("Error deleting payment:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao remover pagamento",
+        description: "Por favor, tente novamente.",
+      });
+    }
   };
 
   const handleCourtExpenseAdded = () => {
@@ -586,12 +619,13 @@ export default function Pagamentos() {
                       <TableHead className="w-[100px]">Valor</TableHead>
                       <TableHead className="w-[100px]">Status</TableHead>
                       <TableHead className="w-[120px]">Data Pagamento</TableHead>
+                      <TableHead className="w-[150px]">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {payments.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center">
+                        <TableCell colSpan={6} className="text-center">
                           Nenhum pagamento registrado
                         </TableCell>
                       </TableRow>
@@ -619,6 +653,28 @@ export default function Pagamentos() {
                           <TableCell>
                             {payment.payment_date ? formatDate(payment.payment_date) : "-"}
                           </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col gap-2 sm:flex-row sm:space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditPayment(payment)}
+                                className="w-full sm:w-auto"
+                              >
+                                <Pencil className="w-4 h-4 mr-2" />
+                                Editar
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeletePayment(payment.id)}
+                                className="w-full sm:w-auto text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Remover
+                              </Button>
+                            </div>
+                          </TableCell>
                         </TableRow>
                       ))
                     )}
@@ -631,7 +687,12 @@ export default function Pagamentos() {
         </Card>
       </div>
 
-      {showCadastro && <CadastroPagamento onClose={handlePaymentAdded} />}
+      {showCadastro && (
+        <CadastroPagamento
+          onClose={handlePaymentAdded}
+          paymentToEdit={paymentToEdit}
+        />
+      )}
       {showCourtExpense && (
         <CadastroCourtExpense
           onClose={handleCourtExpenseAdded}

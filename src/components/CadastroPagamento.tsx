@@ -39,14 +39,26 @@ const formSchema = z.object({
   dataPagamento: z.string().optional(),
 });
 
-interface CadastroPagamentoProps {
-  onClose: () => void;
+interface PaymentToEdit {
+  id: string;
+  amount: number;
+  due_date: string;
+  payment_date: string | null;
+  status: "pending" | "paid" | "overdue";
+  student_id?: string;
 }
 
-export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
+interface CadastroPagamentoProps {
+  onClose: () => void;
+  paymentToEdit?: PaymentToEdit;
+}
+
+export function CadastroPagamento({ onClose, paymentToEdit }: CadastroPagamentoProps) {
   const [students, setStudents] = useState<Tables<"students">[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  const isEditing = !!paymentToEdit;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -66,7 +78,6 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
         const { data, error } = await supabase
           .from("students")
           .select("*")
-          .eq("active", true) // Apenas alunos ativos
           .order("name");
 
         if (error) {
@@ -86,43 +97,81 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
     fetchStudents();
   }, []);
 
+  useEffect(() => {
+    if (paymentToEdit && students.length > 0) {
+      const dueDate = paymentToEdit.due_date;
+      const mesAno = dueDate.substring(0, 7); // "YYYY-MM"
+      
+      form.reset({
+        aluno: paymentToEdit.student_id || "",
+        mesAno: mesAno,
+        valor: paymentToEdit.amount.toString(),
+        status: paymentToEdit.status,
+        dataPagamento: paymentToEdit.payment_date || "",
+      });
+    }
+  }, [paymentToEdit, students, form]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       console.log("Submitting payment:", values);
       
       const [year, month] = values.mesAno.split("-");
-      // Changed to use the 1st day of the selected month, instead of last day of previous month
       const dueDate = `${year}-${month}-01`;
       
       const paymentData = {
         student_id: values.aluno,
         amount: parseFloat(values.valor),
         due_date: dueDate,
-        payment_date: values.status === "paid" ? values.dataPagamento : null,
+        payment_date: values.status === "paid" ? values.dataPagamento || new Date().toISOString().split('T')[0] : null,
         status: values.status,
       };
 
       console.log("Formatted payment data:", paymentData);
 
-      const { error } = await supabase
-        .from("payments")
-        .insert(paymentData);
+      if (isEditing) {
+        const { error } = await supabase
+          .from("payments")
+          .update(paymentData)
+          .eq("id", paymentToEdit.id);
 
-      if (error) {
-        console.error("Error saving payment:", error);
+        if (error) {
+          console.error("Error updating payment:", error);
+          toast({
+            variant: "destructive",
+            title: "Erro ao atualizar pagamento",
+            description: "Ocorreu um erro ao tentar atualizar o pagamento. Tente novamente.",
+          });
+          return;
+        }
+
+        console.log("Payment updated successfully");
         toast({
-          variant: "destructive",
-          title: "Erro ao salvar pagamento",
-          description: "Ocorreu um erro ao tentar salvar o pagamento. Tente novamente.",
+          title: "Pagamento atualizado com sucesso!",
+          description: "O pagamento foi atualizado no sistema.",
         });
-        return;
-      }
+      } else {
+        const { error } = await supabase
+          .from("payments")
+          .insert(paymentData);
 
-      console.log("Payment saved successfully");
-      toast({
-        title: "Pagamento salvo com sucesso!",
-        description: "O pagamento foi registrado no sistema.",
-      });
+        if (error) {
+          console.error("Error saving payment:", error);
+          toast({
+            variant: "destructive",
+            title: "Erro ao salvar pagamento",
+            description: "Ocorreu um erro ao tentar salvar o pagamento. Tente novamente.",
+          });
+          return;
+        }
+
+        console.log("Payment saved successfully");
+        toast({
+          title: "Pagamento salvo com sucesso!",
+          description: "O pagamento foi registrado no sistema.",
+        });
+      }
+      
       onClose();
     } catch (error) {
       console.error("Error in onSubmit:", error);
@@ -138,9 +187,9 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Novo Pagamento</DialogTitle>
+          <DialogTitle>{isEditing ? "Editar Pagamento" : "Novo Pagamento"}</DialogTitle>
           <DialogDescription>
-            Preencha os dados do pagamento abaixo
+            {isEditing ? "Atualize os dados do pagamento abaixo" : "Preencha os dados do pagamento abaixo"}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -151,7 +200,7 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Aluno</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione um aluno" />
@@ -161,7 +210,7 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
                       {isLoading ? (
                         <SelectItem value="loading" disabled>Carregando alunos...</SelectItem>
                       ) : students.length === 0 ? (
-                        <SelectItem value="no-students" disabled>Nenhum aluno ativo cadastrado</SelectItem>
+                        <SelectItem value="no-students" disabled>Nenhum aluno cadastrado</SelectItem>
                       ) : (
                         students.map((student) => (
                           <SelectItem key={student.id} value={student.id}>
@@ -210,7 +259,7 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o status" />
@@ -245,7 +294,7 @@ export function CadastroPagamento({ onClose }: CadastroPagamentoProps) {
               <Button variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
-              <Button type="submit">Salvar</Button>
+              <Button type="submit">{isEditing ? "Atualizar" : "Salvar"}</Button>
             </div>
           </form>
         </Form>
