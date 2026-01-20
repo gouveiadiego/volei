@@ -63,6 +63,14 @@ const FinancialOverview = () => {
         .select("amount, date")
         .gte("date", startDate)
         .order("date");
+
+      // Fetch casual players (jogadores avulsos)
+      const { data: casualPlayers } = await supabase
+        .from("casual_players")
+        .select("amount, game_date, paid")
+        .eq("paid", true)
+        .gte("game_date", startDate)
+        .order("game_date");
         
       // Initialize data structure for last 6 months
       const monthlyData = new Map();
@@ -140,6 +148,17 @@ const FinancialOverview = () => {
         if (monthlyData.has(monthKey)) {
           const monthData = monthlyData.get(monthKey);
           monthData.revenue += Number(income.amount);
+        }
+      });
+
+      // Process casual players (jogadores avulsos)
+      casualPlayers?.forEach(player => {
+        const playerDate = parseISO(player.game_date);
+        const monthKey = format(playerDate, "MMM", { locale: ptBR });
+        
+        if (monthlyData.has(monthKey)) {
+          const monthData = monthlyData.get(monthKey);
+          monthData.revenue += Number(player.amount);
         }
       });
       
