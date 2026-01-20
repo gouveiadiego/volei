@@ -2,18 +2,20 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MinusCircle, Pencil, Trash2 } from "lucide-react";
+import { PlusCircle, MinusCircle, Pencil, Trash2, UserPlus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { CadastroPagamento } from "@/components/CadastroPagamento";
 import { CadastroCourtExpense } from "@/components/CadastroCourtExpense";
 import { CadastroAdditionalIncome } from "@/components/CadastroAdditionalIncome";
 import { CadastroExpense } from "@/components/CadastroExpense";
+import { CadastroCasualPlayer } from "@/components/CadastroCasualPlayer";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 interface Payment {
   id: string;
@@ -50,19 +52,32 @@ interface ExtraExpense {
   description: string;
 }
 
+interface CasualPlayer {
+  id: string;
+  player_name: string;
+  phone: string | null;
+  game_date: string;
+  amount: number;
+  paid: boolean;
+  notes: string | null;
+}
+
 export default function Pagamentos() {
   const [showCadastro, setShowCadastro] = useState(false);
   const [showCourtExpense, setShowCourtExpense] = useState(false);
   const [showAdditionalIncome, setShowAdditionalIncome] = useState(false);
   const [showExpense, setShowExpense] = useState(false);
+  const [showCasualPlayer, setShowCasualPlayer] = useState(false);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [courtExpenses, setCourtExpenses] = useState<CourtExpense[]>([]);
   const [additionalIncomes, setAdditionalIncomes] = useState<AdditionalIncome[]>([]);
   const [extraExpenses, setExtraExpenses] = useState<ExtraExpense[]>([]);
+  const [casualPlayers, setCasualPlayers] = useState<CasualPlayer[]>([]);
   const [expenseToEdit, setExpenseToEdit] = useState<ExtraExpense | undefined>();
   const [incomeToEdit, setIncomeToEdit] = useState<AdditionalIncome | undefined>();
   const [courtExpenseToEdit, setCourtExpenseToEdit] = useState<CourtExpense | undefined>();
   const [paymentToEdit, setPaymentToEdit] = useState<Payment | undefined>();
+  const [casualPlayerToEdit, setCasualPlayerToEdit] = useState<CasualPlayer | undefined>();
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -151,6 +166,26 @@ export default function Pagamentos() {
       setExtraExpenses(data || []);
     } catch (error) {
       console.error("Error:", error);
+    }
+  };
+
+  const fetchCasualPlayers = async () => {
+    try {
+      console.log("Fetching casual players...");
+      const { data, error } = await supabase
+        .from("casual_players")
+        .select("*")
+        .order("game_date", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching casual players:", error);
+        return;
+      }
+
+      console.log("Casual players fetched:", data);
+      setCasualPlayers(data || []);
+    } catch (error) {
+      console.error("Error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -163,7 +198,8 @@ export default function Pagamentos() {
         fetchPayments(),
         fetchCourtExpenses(),
         fetchAdditionalIncomes(),
-        fetchExtraExpenses()
+        fetchExtraExpenses(),
+        fetchCasualPlayers()
       ]);
       setIsLoading(false);
     };
@@ -222,6 +258,40 @@ export default function Pagamentos() {
     setShowExpense(false);
     setExpenseToEdit(undefined);
     fetchExtraExpenses();
+  };
+
+  const handleCasualPlayerAdded = () => {
+    setShowCasualPlayer(false);
+    setCasualPlayerToEdit(undefined);
+    fetchCasualPlayers();
+  };
+
+  const handleEditCasualPlayer = (player: CasualPlayer) => {
+    setCasualPlayerToEdit(player);
+    setShowCasualPlayer(true);
+  };
+
+  const handleDeleteCasualPlayer = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("casual_players")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Jogador avulso removido com sucesso!",
+      });
+      fetchCasualPlayers();
+    } catch (error) {
+      console.error("Error deleting casual player:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao remover jogador avulso",
+        description: "Por favor, tente novamente.",
+      });
+    }
   };
 
   const handleEditIncome = (income: AdditionalIncome) => {
@@ -366,7 +436,15 @@ export default function Pagamentos() {
     <div className="space-y-6 p-4 md:p-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl md:text-3xl font-bold">Pagamentos</h1>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-2">
+        <div className="flex flex-wrap gap-2">
+          <Button 
+            onClick={() => setShowCasualPlayer(true)}
+            variant="secondary"
+            className="w-full sm:w-auto"
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            Jogador Avulso
+          </Button>
           <Button 
             onClick={() => setShowAdditionalIncome(true)}
             className="w-full sm:w-auto"
@@ -379,7 +457,7 @@ export default function Pagamentos() {
             className="w-full sm:w-auto"
           >
             <PlusCircle className="w-4 h-4 mr-2" />
-            Nova Despesa Quadra
+            Despesa Quadra
           </Button>
           <Button 
             onClick={() => setShowExpense(true)} 
@@ -387,7 +465,7 @@ export default function Pagamentos() {
             className="w-full sm:w-auto"
           >
             <MinusCircle className="w-4 h-4 mr-2" />
-            Nova Despesa Extra
+            Despesa Extra
           </Button>
           <Button 
             onClick={() => setShowCadastro(true)}
@@ -400,6 +478,67 @@ export default function Pagamentos() {
       </div>
 
       <div className="grid gap-6">
+        {/* Jogadores Avulsos */}
+        <Card className="border-l-4 border-l-purple-500">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-purple-500" />
+              Jogadores Avulsos (Pagamento por Jogo)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <ScrollArea className="w-full rounded-md border">
+              <div className="relative min-w-full">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[150px]">Nome</TableHead>
+                      <TableHead className="w-[100px]">Data</TableHead>
+                      <TableHead className="w-[100px]">Valor</TableHead>
+                      <TableHead className="w-[80px]">Status</TableHead>
+                      <TableHead className="w-[150px]">Observações</TableHead>
+                      <TableHead className="w-[150px]">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {casualPlayers.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center">
+                          Nenhum jogador avulso registrado
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      casualPlayers.map((player) => (
+                        <TableRow key={player.id}>
+                          <TableCell className="font-medium">{player.player_name}</TableCell>
+                          <TableCell>{formatDate(player.game_date)}</TableCell>
+                          <TableCell>{formatCurrency(player.amount)}</TableCell>
+                          <TableCell>
+                            <Badge variant={player.paid ? "default" : "secondary"} className={player.paid ? "bg-green-500" : "bg-yellow-500"}>
+                              {player.paid ? "Pago" : "Pendente"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="max-w-[150px] truncate">{player.notes || "-"}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="sm" onClick={() => handleEditCasualPlayer(player)}>
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => handleDeleteCasualPlayer(player.id)} className="text-red-600">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader>
             <CardTitle>Receitas Adicionais</CardTitle>
@@ -711,6 +850,14 @@ export default function Pagamentos() {
           expenseToEdit={expenseToEdit}
         />
       )}
+      <CadastroCasualPlayer
+        open={showCasualPlayer}
+        onOpenChange={(open) => {
+          setShowCasualPlayer(open);
+          if (!open) setCasualPlayerToEdit(undefined);
+        }}
+        playerToEdit={casualPlayerToEdit}
+      />
     </div>
   );
 }

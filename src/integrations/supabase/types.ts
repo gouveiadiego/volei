@@ -76,6 +76,42 @@ export type Database = {
           },
         ]
       }
+      casual_players: {
+        Row: {
+          amount: number
+          created_at: string | null
+          game_date: string
+          id: string
+          notes: string | null
+          paid: boolean
+          phone: string | null
+          player_name: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          game_date: string
+          id?: string
+          notes?: string | null
+          paid?: boolean
+          phone?: string | null
+          player_name: string
+          user_id?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          game_date?: string
+          id?: string
+          notes?: string | null
+          paid?: boolean
+          phone?: string | null
+          player_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       court_expenses: {
         Row: {
           amount: number

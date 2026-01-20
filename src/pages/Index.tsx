@@ -83,6 +83,17 @@ const Index = () => {
     },
   });
 
+  const { data: totalCasualPlayers = 0 } = useQuery({
+    queryKey: ["casual-players-total"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("casual_players")
+        .select("amount")
+        .eq("paid", true);
+      return data?.reduce((acc, curr) => acc + Number(curr.amount), 0) || 0;
+    },
+  });
+
   const { data: totalExpenses = 0 } = useQuery({
     queryKey: ["expenses-total"],
     queryFn: async () => {
@@ -100,7 +111,7 @@ const Index = () => {
     },
   });
 
-  const totalBalance = (totalPayments + totalAdditionalIncome) - totalExpenses;
+  const totalBalance = (totalPayments + totalAdditionalIncome + totalCasualPlayers) - totalExpenses;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -170,7 +181,7 @@ const Index = () => {
             </div>
             <div className="flex items-baseline justify-between">
               <p className="text-2xl font-bold text-emerald-500">
-                {formatCurrency(totalPayments + totalAdditionalIncome)}
+                {formatCurrency(totalPayments + totalAdditionalIncome + totalCasualPlayers)}
               </p>
               <p className="text-xs text-muted-foreground">total</p>
             </div>
