@@ -65,6 +65,7 @@ interface CasualPlayer {
 
 export default function Pagamentos() {
   const [showCadastro, setShowCadastro] = useState(false);
+  const [showLote, setShowLote] = useState(false);
   const [showCourtExpense, setShowCourtExpense] = useState(false);
   const [showAdditionalIncome, setShowAdditionalIncome] = useState(false);
   const [showExpense, setShowExpense] = useState(false);
