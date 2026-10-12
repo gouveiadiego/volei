@@ -2,9 +2,10 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MinusCircle, Pencil, Trash2, UserPlus } from "lucide-react";
+import { PlusCircle, MinusCircle, Pencil, Trash2, UserPlus, CheckSquare } from "lucide-react";
 import { useState, useEffect } from "react";
 import { CadastroPagamento } from "@/components/CadastroPagamento";
+import { PagamentoEmLote } from "@/components/PagamentoEmLote";
 import { CadastroCourtExpense } from "@/components/CadastroCourtExpense";
 import { CadastroAdditionalIncome } from "@/components/CadastroAdditionalIncome";
 import { CadastroExpense } from "@/components/CadastroExpense";
@@ -64,6 +65,7 @@ interface CasualPlayer {
 
 export default function Pagamentos() {
   const [showCadastro, setShowCadastro] = useState(false);
+  const [showLote, setShowLote] = useState(false);
   const [showCourtExpense, setShowCourtExpense] = useState(false);
   const [showAdditionalIncome, setShowAdditionalIncome] = useState(false);
   const [showExpense, setShowExpense] = useState(false);
@@ -437,6 +439,10 @@ export default function Pagamentos() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl md:text-3xl font-bold">Pagamentos</h1>
         <div className="flex flex-wrap gap-2">
+          <Button onClick={() => setShowLote(true)} className="w-full sm:w-auto">
+            <CheckSquare className="w-4 h-4 mr-2" />
+            Pagamento em Lote
+          </Button>
           <Button 
             onClick={() => setShowCasualPlayer(true)}
             variant="secondary"
@@ -826,6 +832,9 @@ export default function Pagamentos() {
         </Card>
       </div>
 
+      {showLote && (
+        <PagamentoEmLote onClose={() => { setShowLote(false); fetchPayments(); }} />
+      )}
       {showCadastro && (
         <CadastroPagamento
           onClose={handlePaymentAdded}
