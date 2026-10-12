@@ -657,6 +657,10 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_admin_user: { Args: never; Returns: boolean }
       is_own_user_role: { Args: { role_user_id: string }; Returns: boolean }
+      public_summary: {
+        Args: { _month: string; _owner: string }
+        Returns: Json
+      }
       upsert_user_notification_preferences: {
         Args: {
           p_alert_days_before: number
