@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "12.2.3"
   }
   public: {
     Tables: {
@@ -109,6 +109,36 @@ export type Database = {
           phone?: string | null
           player_name?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      children_profiles: {
+        Row: {
+          avatar_id: string | null
+          created_at: string | null
+          id: string
+          level: number | null
+          name: string
+          parent_id: string
+          stars: number | null
+        }
+        Insert: {
+          avatar_id?: string | null
+          created_at?: string | null
+          id?: string
+          level?: number | null
+          name: string
+          parent_id: string
+          stars?: number | null
+        }
+        Update: {
+          avatar_id?: string | null
+          created_at?: string | null
+          id?: string
+          level?: number | null
+          name?: string
+          parent_id?: string
+          stars?: number | null
         }
         Relationships: []
       }
@@ -380,6 +410,63 @@ export type Database = {
           },
         ]
       }
+      missions_tasks: {
+        Row: {
+          active: boolean | null
+          description: string | null
+          icon: string | null
+          id: string
+          parent_id: string
+          points: number | null
+          title: string
+          type: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          parent_id: string
+          points?: number | null
+          title: string
+          type?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          parent_id?: string
+          points?: number | null
+          title?: string
+          type?: string | null
+        }
+        Relationships: []
+      }
+      parent_rewards: {
+        Row: {
+          active: boolean | null
+          cost: number
+          id: string
+          parent_id: string
+          title: string
+        }
+        Insert: {
+          active?: boolean | null
+          cost: number
+          id?: string
+          parent_id: string
+          title: string
+        }
+        Update: {
+          active?: boolean | null
+          cost?: number
+          id?: string
+          parent_id?: string
+          title?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -490,6 +577,45 @@ export type Database = {
         }
         Relationships: []
       }
+      task_submissions: {
+        Row: {
+          child_id: string
+          completed_at: string | null
+          id: string
+          status: string | null
+          task_id: string
+        }
+        Insert: {
+          child_id: string
+          completed_at?: string | null
+          id?: string
+          status?: string | null
+          task_id: string
+        }
+        Update: {
+          child_id?: string
+          completed_at?: string | null
+          id?: string
+          status?: string | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_submissions_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_submissions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "missions_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -560,12 +686,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -589,11 +715,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -614,11 +740,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -639,11 +765,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -656,11 +782,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
