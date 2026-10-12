@@ -10,6 +10,7 @@ import Alunos from "./pages/Alunos";
 import Pagamentos from "./pages/Pagamentos";
 import Frequencia from "./pages/Frequencia";
 import Auth from "./pages/Auth";
+import ResumoPublico from "./pages/ResumoPublico";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -96,6 +97,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
+          <Route path="/resumo/:owner" element={<ResumoPublico />} />
           <Route
             path="/"
             element={
