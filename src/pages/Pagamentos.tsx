@@ -2,7 +2,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MinusCircle, Pencil, Trash2, UserPlus, CheckSquare } from "lucide-react";
+import { PlusCircle, MinusCircle, Pencil, Trash2, UserPlus, CheckSquare, Share2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { CadastroPagamento } from "@/components/CadastroPagamento";
 import { PagamentoEmLote } from "@/components/PagamentoEmLote";
@@ -439,6 +439,20 @@ export default function Pagamentos() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl md:text-3xl font-bold">Pagamentos</h1>
         <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto"
+            onClick={async () => {
+              const { data } = await supabase.auth.getUser();
+              if (!data.user) return;
+              const link = `https://volei.lovable.app/resumo/${data.user.id}`;
+              await navigator.clipboard.writeText(link).catch(() => {});
+              window.prompt("Link copiado! Envie no grupo:", link);
+            }}
+          >
+            <Share2 className="w-4 h-4 mr-2" />
+            Link para o grupo
+          </Button>
           <Button onClick={() => setShowLote(true)} className="w-full sm:w-auto">
             <CheckSquare className="w-4 h-4 mr-2" />
             Pagamento em Lote
